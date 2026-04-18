@@ -1,0 +1,6 @@
+{
+  "name": "MRDU Document Verification",
+  "description": "Student admission document verification ERP module with registration, checklist, and receipt generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
