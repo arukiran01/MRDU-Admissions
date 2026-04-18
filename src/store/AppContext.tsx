@@ -25,12 +25,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const response = await fetch('/api/students');
       if (response.ok) {
         const data = await response.json();
-        setStudents(data);
         
-        // Ensure currentStudent is also updated if it exists in the list for real-time accuracy
+        // Use functional state update to avoid stale closures
+        setStudents((prevStudents) => {
+          // If the data is actually different, update it
+          if (JSON.stringify(prevStudents) !== JSON.stringify(data)) {
+            return data;
+          }
+          return prevStudents;
+        });
+        
+        // Ensure currentStudent matches the fresh data
         if (currentStudent) {
-          const updated = data.find((s: Student) => s.id === currentStudent.id);
-          if (updated) setCurrentStudent(updated);
+          const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
+          if (freshCurrent && JSON.stringify(freshCurrent) !== JSON.stringify(currentStudent)) {
+            setCurrentStudent(freshCurrent);
+          }
         }
       }
     } catch (error) {
@@ -42,12 +52,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch initial data and setup background polling for real-time accuracy
   useEffect(() => {
+    // Immediate fetch on mount
     fetchStudents();
     
-    // Background polling every 5 seconds for near real-time updates as requested
-    const interval = setInterval(fetchStudents, 5000);
+    // Background polling every 3 seconds for active sessions
+    const interval = setInterval(fetchStudents, 3000);
     return () => clearInterval(interval);
-  }, [currentStudent?.id]); // Watch ID changes for refresh logic
+  }, [currentStudent?.id]); // Watch ID changes for context specific refresh
 
   const addStudent = async (student: Student) => {
     // Optimistic UI update

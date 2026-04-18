@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Add Student', path: '/add-student', icon: UserPlus },
     { name: 'Document Verification', path: '/verify', icon: CheckSquare },
-    { name: 'Reports', path: '#', icon: FileText },
+    { name: 'Reports', path: '/reports', icon: FileText },
   ];
 
   // Do not show sidebar on certain pages like login or print receipt

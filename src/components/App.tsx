@@ -11,6 +11,7 @@ import Dashboard from '../pages/Dashboard';
 import AddStudent from '../pages/AddStudent';
 import VerifyDocuments from '../pages/VerifyDocuments';
 import Receipt from '../pages/Receipt';
+import Reports from '../pages/Reports';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/add-student" element={<Layout><AddStudent /></Layout>} />
           <Route path="/verify" element={<Layout><VerifyDocuments /></Layout>} />
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
           
           {/* Receipt Route (no standard sidebar layout, handles its own A4 layout) */}
           <Route path="/receipt" element={<Layout><Receipt /></Layout>} />

@@ -31,36 +31,38 @@ export default function Receipt() {
     if (!receiptRef.current || !currentStudent) return;
     
     setIsDownloading(true);
-    // Suppress logs as per user request
-    // await logAction('PDF Download', `Downloaded PDF receipt for student ${currentStudent.name} (Admission No: ${currentStudent.admissionNo}).`, currentStudent.id);
 
     try {
-      // Small delay to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Ensure the component is fully rendered and images are loaded
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 1.5, // Slightly lower scale for better stability and lower RAM usage on slow devices
+        scale: 1.25, // Lower scale for better memory management while keeping clarity
         useCORS: true,
-        logging: false,
+        allowTaint: true,
         backgroundColor: '#ffffff',
-        windowWidth: 1400 // Fixed width for consistent rendering
+        width: 1400, // Fixed design width
+        windowWidth: 1400,
+        scrollX: 0,
+        scrollY: -window.scrollY // Fix for scrolled pages
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.9); // Slight compression to help with large PDF generation
+      const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG is smaller than PNG for PDFs
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Admission_Slip_${currentStudent.admissionNo}_${currentStudent.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('PDF generation failed. This might be due to browser memory limits. Please try "Print to PDF" using the Print button instead.');
+      alert('PDF generation failed partially. This is often due to browser memory limits. \n\nPRO TIP: Use the "Print Receipt" button and choose "Save as PDF" in the print destination for a perfect A4 copy.');
     } finally {
       setIsDownloading(false);
     }
