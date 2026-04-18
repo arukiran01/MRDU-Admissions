@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Dashboard() {
-  const { students, auditLogs, setCurrentStudent, updateStudent, deleteStudent, isLoading } = useAppContext();
+  const { students, setCurrentStudent, updateStudent, deleteStudent, isLoading } = useAppContext();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [branchFilter, setBranchFilter] = useState('');

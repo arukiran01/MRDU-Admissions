@@ -55,7 +55,7 @@ export default function VerifyDocuments() {
   };
 
   const handleSubmit = async () => {
-    updateStudent(currentStudent.id, {
+    await updateStudent(currentStudent.id, {
       documents: docs,
       status: 'Verified',
     });
@@ -163,54 +163,30 @@ export default function VerifyDocuments() {
         </div>
       </div>
       
-      {/* Receipt Preview Sidebar (theme specified) */}
+      {/* Receipt Preview Sidebar */}
       <div className="flex flex-col gap-3">
         <div className="text-xs font-bold mb-2">Live Receipt Preview</div>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col gap-3">
           
           <div className="border border-dashed border-slate-300 p-3 rounded bg-white text-[9px] leading-[1.4]">
             <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">
-              <div className="text-[10px]">MALLA REDDY (MR) - STUDENT COPY</div>
-              <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303</div>
+              <div className="text-[10px]">MALLA REDDY (MR)</div>
+              <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
             </div>
             <p><strong>Name:</strong> {currentStudent.name}</p>
-            <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
-            <p><strong>Docs Verified:</strong> ...</p>
-            <div className="mt-8 pt-1 border-t border-slate-400 text-center">
+            <p><strong>Adm No:</strong> {currentStudent.admissionNo}</p>
+            <p className="mt-1"><strong>Status:</strong> <span className="text-blue-600">PENDING RECEIPT</span></p>
+            <div className="mt-12 pt-1 border-t border-slate-400 text-center">
               <p className="text-[7px] text-slate-800 font-bold uppercase tracking-wider">Authorized Signature</p>
             </div>
           </div>
-          
-          <div className="border-t border-dashed border-slate-300"></div>
-
-          <div className="border border-dashed border-slate-300 p-3 rounded bg-white text-[9px] leading-[1.4]">
-            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">
-               <div className="text-[10px]">MALLA REDDY (MR) - OFFICE COPY</div>
-               <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303</div>
-            </div>
-            <p><strong>Name:</strong> {currentStudent.name}</p>
-            <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
-             <p><strong>Docs Verified:</strong> ...</p>
-            <div className="mt-8 pt-1 border-t border-slate-400 text-center">
-              <p className="text-[7px] text-slate-800 font-bold uppercase tracking-wider">Authorized Signature</p>
-            </div>
-          </div>
-
-          <button 
-            onClick={handleSubmit}
-            className="w-full text-xs font-semibold py-2 bg-transparent border border-slate-200 rounded hover:bg-slate-50 transition-colors mt-1"
-          >
-            Print Receipt (A4)
-          </button>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mt-3">
-          <div className="text-[11px] font-bold mb-2">Recent Activity</div>
-          <div className="text-[10px] text-slate-500 space-y-1.5">
-            <div className="flex justify-between"><span>V. Reddy</span><span className="text-emerald-600 font-semibold">Verified</span></div>
-            <div className="flex justify-between"><span>M. Khan</span><span className="text-amber-600 font-semibold">Pending</span></div>
-            <div className="flex justify-between"><span>S. Gupta</span><span className="text-emerald-600 font-semibold">Verified</span></div>
-          </div>
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 mt-2">
+          <div className="text-[11px] font-bold text-blue-800 mb-2 uppercase tracking-wider">Verification Guide</div>
+          <p className="text-[10px] text-blue-700 leading-relaxed">
+            Please ensure you have physically verified the original documents before checking them in the list. Once verified, the digital receipt will be generated for the student.
+          </p>
         </div>
       </div>
     </div>

@@ -70,6 +70,11 @@ export default function Receipt() {
     { key: 'interBonafide', label: 'Inter/Diploma Bonafide' },
     { key: 'tc', label: 'Transfer Certificate (TC)' },
     { key: 'interPC', label: 'Inter/Diploma PC' },
+    { key: 'degreeCMM', label: 'Degree CMM' },
+    { key: 'degreePC', label: 'Degree PC' },
+    { key: 'aadhaar', label: 'Aadhaar Card' },
+    { key: 'rankCard', label: 'Entrance Rank Card' },
+    { key: 'others', label: 'Other Documents' },
   ];
 
   const ReceiptCopy = () => {

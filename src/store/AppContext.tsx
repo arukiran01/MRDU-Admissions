@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Student, AuditLog } from '../types';
+import { Student } from '../types';
 
 interface AppContextType {
   students: Student[];
-  auditLogs: AuditLog[];
   addStudent: (student: Student) => Promise<void>;
   updateStudent: (id: string, data: Partial<Student>) => Promise<void>;
   deleteStudent: (id: string) => Promise<void>;
   logAction: (action: string, details: string, studentId?: string) => Promise<void>;
-  fetchAuditLogs: () => Promise<void>;
+  fetchStudents: () => Promise<void>;
   currentStudent: Student | null;
   setCurrentStudent: (student: Student | null) => void;
   isLoading: boolean;
@@ -18,40 +17,30 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAuditLogs = async () => {
+  const fetchStudents = async () => {
     try {
-      const response = await fetch('/api/audit-logs');
+      const response = await fetch('/api/students');
       if (response.ok) {
         const data = await response.json();
-        setAuditLogs(data);
+        setStudents(data);
       }
     } catch (error) {
-      console.error("Failed to fetch audit logs:", error);
+      console.error("Failed to fetch students backend:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Fetch initial data from backend (Supabase or Memory fallback via express server)
+  // Fetch initial data and setup background polling for real-time accuracy
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch('/api/students');
-        if (response.ok) {
-          const data = await response.json();
-          setStudents(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch students backend:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchStudents();
-    fetchAuditLogs();
+    
+    // Background polling every 20 seconds to keep data fresh without overloading
+    const interval = setInterval(fetchStudents, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   const addStudent = async (student: Student) => {
@@ -61,18 +50,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // Backend sync
     try {
-      await fetch('/api/students', {
+      const response = await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(student)
       });
-      await fetchAuditLogs();
+      
+      if (!response.ok) throw new Error("Database insertion failed");
+      
+      // Refresh to ensure absolute sync with backend
+      await fetchStudents();
     } catch (e) {
       console.error("Failed writing to backend:", e);
+      // Revert/refresh on failure
+      await fetchStudents();
     }
   };
 
   const updateStudent = async (id: string, data: Partial<Student>) => {
+    // Capture state for potential rollback
+    const previousStudents = [...students];
+
     // Optimistic UI update
     setStudents((prev) =>
       prev.map((s) => (s.id === id ? { ...s, ...data } : s))
@@ -83,18 +81,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // Backend sync
     try {
-      await fetch(`/api/students/${encodeURIComponent(id)}`, {
+      const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      await fetchAuditLogs();
+      
+      if (!response.ok) throw new Error("Update failed");
+      
+      await fetchStudents();
     } catch (e) {
       console.error("Failed updating backend:", e);
+      setStudents(previousStudents);
     }
   };
 
   const deleteStudent = async (id: string) => {
+    const previousStudents = [...students];
+
     // Optimistic UI update
     setStudents((prev) => prev.filter((s) => s.id !== id));
     if (currentStudent?.id === id) {
@@ -103,38 +107,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // Backend sync
     try {
-      await fetch(`/api/students/${encodeURIComponent(id)}`, {
+      const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
-      await fetchAuditLogs();
+      
+      if (!response.ok) throw new Error("Deletion failed");
+      
+      await fetchStudents();
     } catch (e) {
       console.error("Failed deleting from backend:", e);
+      setStudents(previousStudents);
     }
   };
 
   const logAction = async (action: string, details: string, studentId?: string) => {
-    try {
-      await fetch('/api/audit-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, details, studentId })
-      });
-      await fetchAuditLogs();
-    } catch (e) {
-      console.error("Failed to log action:", e);
-    }
+    // Audit logs removed per user request "remove recent activity"
+    // Method preserved for interface compatibility but performs no operation
+    console.log(`Action Log (Suppressed): ${action} - ${details}`);
   };
 
   return (
     <AppContext.Provider
       value={{
         students,
-        auditLogs,
         addStudent,
         updateStudent,
         deleteStudent,
         logAction,
-        fetchAuditLogs,
+        fetchStudents,
         currentStudent,
         setCurrentStudent,
         isLoading

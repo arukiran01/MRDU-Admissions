@@ -38,7 +38,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="h-[75px] flex items-center px-4 shrink-0 border-b border-slate-200">
           <img src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" alt="MALLA REDDY Logo" className="h-10 w-auto mr-2 shrink-0" referrerPolicy="no-referrer" />
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold text-slate-800 leading-tight">MALLA REDDY</span>
+            <span className="text-[13px] font-bold text-slate-800 leading-tight">MALLA REDDY (MR)</span>
             <span className="text-[9px] font-bold text-slate-500">(DEEMED TO BE UNIVERSITY)</span>
           </div>
         </div>
