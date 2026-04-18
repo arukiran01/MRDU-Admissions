@@ -31,20 +31,22 @@ export default function Receipt() {
     if (!receiptRef.current || !currentStudent) return;
     
     setIsDownloading(true);
-    await logAction('PDF Download', `Downloaded PDF receipt for student ${currentStudent.name} (Admission No: ${currentStudent.admissionNo}).`, currentStudent.id);
+    // Suppress logs as per user request
+    // await logAction('PDF Download', `Downloaded PDF receipt for student ${currentStudent.name} (Admission No: ${currentStudent.admissionNo}).`, currentStudent.id);
 
     try {
       // Small delay to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 2, // Better quality
+        scale: 1.5, // Slightly lower scale for better stability and lower RAM usage on slow devices
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 1400 // Fixed width for consistent rendering
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 0.9); // Slight compression to help with large PDF generation
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -55,10 +57,10 @@ export default function Receipt() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Admission_Receipt_${currentStudent.admissionNo}_${currentStudent.name.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`Admission_Slip_${currentStudent.admissionNo}_${currentStudent.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try printing as PDF instead.');
+      alert('PDF generation failed. This might be due to browser memory limits. Please try "Print to PDF" using the Print button instead.');
     } finally {
       setIsDownloading(false);
     }
@@ -78,38 +80,41 @@ export default function Receipt() {
   ];
 
   const ReceiptCopy = ({ type }: { type: 'OFFICE COPY' | 'STUDENT COPY' }) => {
+    // Only show ticked documents as per user request: "only selected checkboxes only should print"
+    const tickedDocuments = checklistMap.filter(item => !!currentStudent.documents[item.key as keyof typeof currentStudent.documents]);
+
     return (
-    <div className="border-[1.5px] border-slate-900 p-4 sm:p-5 h-full flex flex-col bg-white print:bg-white relative">
-      <div className="text-center pb-3 mb-4 print:border-black">
+    <div className="border-[1.5px] border-slate-900 p-3 h-full flex flex-col bg-white print:bg-white relative">
+      <div className="text-center pb-2 mb-3 print:border-black">
         <div className="flex justify-center mb-1">
           <img 
             src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
             alt="MRDU Logo" 
-            className="h-16 w-auto" 
+            className="h-12 w-auto" 
             referrerPolicy="no-referrer" 
           />
         </div>
-        <h1 className="text-[26px] font-black uppercase tracking-tight mb-0.5 print:text-black leading-none">MALLA REDDY (MR)</h1>
+        <h1 className="text-[18px] font-black uppercase tracking-tight mb-0.5 print:text-black leading-none">MALLA REDDY (MR)</h1>
         <div className="flex flex-col items-center gap-0.5">
-          <p className="text-[13px] font-black text-slate-800 print:text-black uppercase tracking-normal leading-tight">
+          <p className="text-[11px] font-black text-slate-800 print:text-black uppercase tracking-normal leading-tight">
             (DEEMED TO BE UNIVERSITY)
           </p>
-          <p className="text-[10px] font-bold text-slate-700 print:text-black leading-tight">
+          <p className="text-[8px] font-bold text-slate-700 print:text-black leading-tight">
             Recognised Under Section 3 of The UGC Act, 1956.
           </p>
         </div>
-        <p className="text-[9px] font-black print:text-black mt-2 leading-tight border-t-[1.5px] border-slate-900 pt-2 pb-1">
+        <p className="text-[8px] font-black print:text-black mt-1.5 leading-tight border-t-[1.5px] border-slate-900 pt-1.5 pb-1">
           Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </p>
       </div>
 
-      <div className="flex justify-center mb-6">
-        <h2 className="text-[16px] font-black underline underline-offset-4 uppercase print:text-black tracking-[0.2em]">
+      <div className="flex justify-center mb-4">
+        <h2 className="text-[14px] font-black underline underline-offset-4 uppercase print:text-black tracking-[0.1em]">
           ADMISSIONS CERTIFICATION
         </h2>
       </div>
 
-      <div className="grid grid-cols-[165px_20px_1fr] sm:grid-cols-[210px_20px_1fr] gap-y-3 mb-8 text-[13px] sm:text-[15px] font-black print:text-black">
+      <div className="grid grid-cols-[140px_15px_1fr] sm:grid-cols-[180px_15px_1fr] gap-y-1.5 mb-3 text-[12px] font-black print:text-black">
         <div>Enq.No</div>
         <div>:</div>
         <div className="uppercase">{currentStudent.admissionNo}</div>
@@ -131,41 +136,48 @@ export default function Receipt() {
         <div className="uppercase">{currentStudent.branch}</div>
       </div>
 
-      <div className="mb-6 print:text-black">
-        <div className="font-black text-[14px] underline mb-4">Submitted Documents:</div>
-        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-          {checklistMap.map((item) => {
-            const isTicked = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
-            return (
-              <div key={item.key} className="flex items-center space-x-3">
-                <div className="w-5 h-5 border-[1.5px] border-slate-900 print:border-black flex items-center justify-center shrink-0 rounded-sm bg-white">
-                  {isTicked && <span className="text-sm font-black text-slate-900 print:text-black">✓</span>}
+      <div className="mb-3 print:text-black">
+        <div className="font-black text-[12px] underline mb-2 uppercase tracking-wide">Submitted Documents:</div>
+        {tickedDocuments.length > 0 ? (
+          <div className="grid grid-cols-2 gap-y-1.5 gap-x-4">
+            {tickedDocuments.map((item) => {
+              const displayLabel = item.key === 'others' 
+                ? `Other: ${currentStudent.documents.others}`
+                : item.label;
+              return (
+                <div key={item.key} className="flex items-center space-x-2">
+                  <div className="w-[15px] h-[15px] border-[1.5px] border-slate-900 print:border-black flex items-center justify-center shrink-0 rounded-sm bg-white">
+                    <span className="text-[10px] font-black text-slate-900 print:text-black">✓</span>
+                  </div>
+                  <span className="text-[11px] font-bold leading-none">{displayLabel}</span>
                 </div>
-                <span className="text-[14px] font-bold leading-none">{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-slate-400 italic text-[11px]">No original documents recorded.</div>
+        )}
       </div>
 
       <div className="flex-1"></div>
 
       {/* Signature block */}
-      <div className="flex justify-end mb-4 relative mt-auto pt-4">
-        <div className="text-center min-w-[220px]">
+      <div className="flex justify-end mb-2 relative mt-auto pt-2">
+        <div className="text-center min-w-[160px]">
           <div className="border-t-[1.5px] border-slate-900 print:border-black w-full mb-1"></div>
-          <p className="font-black text-[12px] tracking-wide uppercase print:text-black">Authorized Signature</p>
+          <p className="font-black text-[10px] tracking-wide uppercase print:text-black">Authorized Signature</p>
         </div>
       </div>
 
       {/* Note Box */}
-      <div className="border-[1.5px] border-slate-900 p-3 text-[10px] sm:text-[11px] font-bold leading-relaxed print:border-black print:text-black">
+      <div className="border-[1.5px] border-slate-900 p-2 text-[9px] font-bold leading-relaxed print:border-black print:text-black">
         <p><span className="font-black">Note:</span> Parents are requested to preserve this receipt for future clarifications in
         respect of fee paid by you. Fee once paid will not be refunded or transferred.
         Cheques subject to realization.</p>
       </div>
     </div>
-  )};
+  );
+};
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 print:py-0 print:bg-white font-sans text-slate-900 overflow-x-auto">
@@ -235,18 +247,18 @@ export default function Receipt() {
           </div>
 
           {/* Twin Copy Layout */}
-          <div className="flex-1 px-6 pb-6 pt-2 print:px-8 print:pb-8 flex flex-row print:w-full print:h-full gap-8 print:gap-14 box-border">
+          <div className="flex-1 px-4 pb-4 pt-1 print:px-8 print:pb-8 flex flex-row print:w-full print:h-full gap-4 print:gap-8 box-border">
             {/* Left Copy */}
             <div className="flex-1 h-full">
               <ReceiptCopy type="OFFICE COPY" />
             </div>
 
             {/* Vertically centered cut line */}
-            <div className="flex flex-col items-center justify-center relative w-2">
-               <div className="absolute inset-y-0 border-l-[1.5px] border-dashed border-slate-400"></div>
-               <div className="bg-white py-6 z-10 flex flex-col items-center gap-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] vertical-text">CUT HERE</span>
-                  <span className="text-lg">✂</span>
+            <div className="flex flex-col items-center justify-center relative w-1 px-1">
+               <div className="absolute inset-y-0 border-l-[1px] border-dashed border-slate-400"></div>
+               <div className="bg-white py-4 z-10 flex flex-col items-center gap-2">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] vertical-text">CUT HERE</span>
+                  <span className="text-sm">✂</span>
                </div>
             </div>
 

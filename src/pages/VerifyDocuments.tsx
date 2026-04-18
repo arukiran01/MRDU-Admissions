@@ -168,18 +168,18 @@ export default function VerifyDocuments() {
         <div className="text-xs font-bold mb-2 uppercase tracking-widest text-slate-500">Live Receipt Preview</div>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
           
-          <div className="border-[1.5px] border-slate-900 p-3 rounded bg-white text-[8px] leading-[1.3] font-bold">
-            <div className="text-center pb-2 mb-2">
-              <div className="text-[10px] font-black uppercase">MALLA REDDY (MR)</div>
-              <div className="text-[7px] font-black text-slate-800 mt-0.5">(DEEMED TO BE UNIVERSITY)</div>
+          <div className="border-[1.5px] border-slate-900 p-2 rounded bg-white text-[7px] leading-[1.2] font-bold">
+            <div className="text-center pb-1 mb-1.5">
+              <div className="text-[9px] font-black uppercase">MALLA REDDY (MR)</div>
+              <div className="text-[6px] font-black text-slate-800 mt-0.5">(DEEMED TO BE UNIVERSITY)</div>
               <div className="text-[5px] font-bold text-slate-500 mt-0.5 border-t border-slate-900 pt-1">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
             </div>
             
-            <div className="flex justify-center mb-2">
-              <span className="text-[8px] underline font-black uppercase tracking-widest">ADMISSIONS CERTIFICATION</span>
+            <div className="flex justify-center mb-1.5">
+              <span className="text-[7px] underline font-black uppercase tracking-wider">ADMISSIONS CERTIFICATION</span>
             </div>
 
-            <div className="grid grid-cols-[60px_5px_1fr] gap-y-1 text-[7px]">
+            <div className="grid grid-cols-[55px_5px_1fr] gap-y-0.5 text-[6.5px]">
               <span>Enq.No</span><span>:</span><span className="uppercase">{currentStudent.admissionNo}</span>
               <span>Name</span><span>:</span><span className="uppercase">{currentStudent.name}</span>
               <span>Father's Name</span><span>:</span><span className="uppercase">{currentStudent.fatherName}</span>
@@ -187,11 +187,24 @@ export default function VerifyDocuments() {
               <span>Course</span><span>:</span><span className="uppercase">{currentStudent.branch}</span>
             </div>
 
-            <div className="mt-4 pt-1 border-t border-slate-900 text-center">
-              <p className="text-[6px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
+            <div className="mt-2 border-t border-slate-200 pt-1">
+               <p className="text-[5.5px] font-black underline mb-0.5">DOCUMENTS SUBMITTED:</p>
+               <div className="flex flex-wrap gap-1">
+                 {Object.entries(docs).map(([key, value]) => {
+                   if (value === true && key !== 'others') {
+                     const label = checklistItems.find(i => i.key === key)?.label || key;
+                     return <span key={key} className="bg-slate-50 px-0.5 rounded-[1px] text-[4.5px] uppercase border-[0.5px] border-slate-200">✓ {label}</span>;
+                   }
+                   return null;
+                 })}
+               </div>
             </div>
 
-            <div className="mt-2 border border-slate-900 p-1 text-[5px] leading-tight font-bold">
+            <div className="mt-3 pt-1 border-t border-slate-900 text-center">
+              <p className="text-[5.5px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
+            </div>
+
+            <div className="mt-1.5 border border-slate-900 p-1 text-[4.5px] leading-tight font-bold">
               <span className="font-black text-slate-950">Note:</span> Parents are requested to preserve this receipt for future clarifications...
             </div>
           </div>

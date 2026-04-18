@@ -26,6 +26,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (response.ok) {
         const data = await response.json();
         setStudents(data);
+        
+        // Ensure currentStudent is also updated if it exists in the list for real-time accuracy
+        if (currentStudent) {
+          const updated = data.find((s: Student) => s.id === currentStudent.id);
+          if (updated) setCurrentStudent(updated);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch students backend:", error);
@@ -38,10 +44,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchStudents();
     
-    // Background polling every 20 seconds to keep data fresh without overloading
-    const interval = setInterval(fetchStudents, 20000);
+    // Background polling every 5 seconds for near real-time updates as requested
+    const interval = setInterval(fetchStudents, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentStudent?.id]); // Watch ID changes for refresh logic
 
   const addStudent = async (student: Student) => {
     // Optimistic UI update
