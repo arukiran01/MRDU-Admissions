@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -29,9 +29,9 @@ export default function Login() {
             <img src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" alt="MALLA REDDY Logo" className="h-[70px] w-auto" referrerPolicy="no-referrer" />
             <div className="text-center mt-2">
               <h1 className="text-lg font-bold text-slate-800 uppercase tracking-widest leading-tight">MALLA REDDY (MR)</h1>
-              <p className="text-[10px] font-bold text-slate-600 mb-1">(DEEMED TO BE UNIVERSITY)</p>
-              <p className="text-[8px] text-slate-400 font-medium leading-[1.2] max-w-[280px]">
-                Recognised Under Section 3 of The UGC Act, 1956, Vide Notification No.9-5/2025-U.3(A) by Department of Higher Education, Ministry of Education, Government of India.
+              <p className="text-[11px] font-bold text-slate-800 mt-1 uppercase tracking-wide leading-tight">(DEEMED TO BE UNIVERSITY)</p>
+              <p className="text-[9px] text-slate-600 font-medium leading-tight mt-1 max-w-[280px]">
+                Recognised Under Section 3 of The UGC Act, 1956.
               </p>
             </div>
           </div>

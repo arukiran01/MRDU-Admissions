@@ -23,4 +23,12 @@ export interface Student {
   academicYear: string;
 }
 
+export interface AuditLog {
+  id: string;
+  action: string;
+  details: string;
+  studentId?: string;
+  timestamp: string;
+}
+
 export type DocumentKey = keyof Student['documents'];

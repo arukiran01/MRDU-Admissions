@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
@@ -135,13 +135,13 @@ export default function VerifyDocuments() {
           <div className="flex gap-3 relative overflow-hidden">
             <button
               onClick={handleSubmit}
-              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
             >
               Verify & Generate Receipt
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-5 py-2.5 bg-transparent border border-slate-200 text-slate-800 text-sm font-semibold rounded-md hover:bg-slate-50 transition-colors"
+              className="px-5 py-2.5 bg-transparent border border-slate-200 text-slate-800 text-sm font-semibold rounded-md hover:bg-slate-50 active:scale-95 transition-all"
             >
               Hold Application
             </button>
@@ -176,8 +176,8 @@ export default function VerifyDocuments() {
             <p><strong>Name:</strong> {currentStudent.name}</p>
             <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
             <p><strong>Docs Verified:</strong> ...</p>
-            <div className="mt-4 pt-1 border-t border-slate-200 text-center">
-              <p className="text-[7px] text-slate-500 font-semibold">Authorized Signature</p>
+            <div className="mt-8 pt-1 border-t border-slate-400 text-center">
+              <p className="text-[7px] text-slate-800 font-bold uppercase tracking-wider">Authorized Signature</p>
             </div>
           </div>
           
@@ -191,8 +191,8 @@ export default function VerifyDocuments() {
             <p><strong>Name:</strong> {currentStudent.name}</p>
             <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
              <p><strong>Docs Verified:</strong> ...</p>
-            <div className="mt-4 pt-1 border-t border-slate-200 text-center">
-              <p className="text-[7px] text-slate-500 font-semibold">Authorized Signature</p>
+            <div className="mt-8 pt-1 border-t border-slate-400 text-center">
+              <p className="text-[7px] text-slate-800 font-bold uppercase tracking-wider">Authorized Signature</p>
             </div>
           </div>
 

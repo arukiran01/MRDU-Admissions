@@ -6,6 +6,7 @@ interface AppContextType {
   auditLogs: AuditLog[];
   addStudent: (student: Student) => Promise<void>;
   updateStudent: (id: string, data: Partial<Student>) => Promise<void>;
+  deleteStudent: (id: string) => Promise<void>;
   logAction: (action: string, details: string, studentId?: string) => Promise<void>;
   fetchAuditLogs: () => Promise<void>;
   currentStudent: Student | null;
@@ -93,6 +94,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteStudent = async (id: string) => {
+    // Optimistic UI update
+    setStudents((prev) => prev.filter((s) => s.id !== id));
+    if (currentStudent?.id === id) {
+      setCurrentStudent(null);
+    }
+
+    // Backend sync
+    try {
+      await fetch(`/api/students/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      await fetchAuditLogs();
+    } catch (e) {
+      console.error("Failed deleting from backend:", e);
+    }
+  };
+
   const logAction = async (action: string, details: string, studentId?: string) => {
     try {
       await fetch('/api/audit-logs', {
@@ -113,6 +132,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         auditLogs,
         addStudent,
         updateStudent,
+        deleteStudent,
         logAction,
         fetchAuditLogs,
         currentStudent,

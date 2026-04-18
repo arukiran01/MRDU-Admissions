@@ -96,7 +96,22 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  // 4. Fetch Audit Logs
+  // 4. Delete Student
+  app.delete('/api/students/:id', async (req, res) => {
+    const { id } = req.params;
+
+    if (supabase) {
+      const { error } = await supabase.from('students').delete().eq('id', id);
+      if (error) return res.status(500).json({ error: error.message });
+    } else {
+      fallbackMemoryStudents = fallbackMemoryStudents.filter((s) => s.id !== id);
+    }
+
+    await createAuditLog('Student Deletion', `Student with ID ${id} was deleted.`, id);
+    res.json({ success: true });
+  });
+
+  // 5. Fetch Audit Logs
   app.get('/api/audit-logs', async (req, res) => {
     if (supabase) {
       const { data, error } = await supabase

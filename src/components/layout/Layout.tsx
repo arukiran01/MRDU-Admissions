@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div /> {/* Spacer */}
           <div className="flex items-center space-x-6">
             <div className="text-right">
-              <div className="text-[13px] font-semibold text-slate-800">Rahul Sharma</div>
+              <div className="text-[13px] font-semibold text-slate-800">Admin</div>
               <div className="text-[11px] text-slate-500">Administration Team</div>
             </div>
             <button 
