@@ -165,27 +165,45 @@ export default function VerifyDocuments() {
       
       {/* Receipt Preview Sidebar */}
       <div className="flex flex-col gap-3">
-        <div className="text-xs font-bold mb-2">Live Receipt Preview</div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col gap-3">
+        <div className="text-xs font-bold mb-2 uppercase tracking-widest text-slate-500">Live Receipt Preview</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
           
-          <div className="border border-dashed border-slate-300 p-3 rounded bg-white text-[9px] leading-[1.4]">
-            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">
-              <div className="text-[10px]">MALLA REDDY (MR)</div>
-              <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
+          <div className="border-[1.5px] border-slate-900 p-3 rounded bg-white text-[8px] leading-[1.3] font-bold">
+            <div className="text-center pb-2 mb-2">
+              <div className="text-[10px] font-black uppercase">MALLA REDDY (MR)</div>
+              <div className="text-[7px] font-black text-slate-800 mt-0.5">(DEEMED TO BE UNIVERSITY)</div>
+              <div className="text-[5px] font-bold text-slate-500 mt-0.5 border-t border-slate-900 pt-1">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
             </div>
-            <p><strong>Name:</strong> {currentStudent.name}</p>
-            <p><strong>Adm No:</strong> {currentStudent.admissionNo}</p>
-            <p className="mt-1"><strong>Status:</strong> <span className="text-blue-600">PENDING RECEIPT</span></p>
-            <div className="mt-12 pt-1 border-t border-slate-400 text-center">
-              <p className="text-[7px] text-slate-800 font-bold uppercase tracking-wider">Authorized Signature</p>
+            
+            <div className="flex justify-center mb-2">
+              <span className="text-[8px] underline font-black uppercase tracking-widest">ADMISSIONS CERTIFICATION</span>
+            </div>
+
+            <div className="grid grid-cols-[60px_5px_1fr] gap-y-1 text-[7px]">
+              <span>Enq.No</span><span>:</span><span className="uppercase">{currentStudent.admissionNo}</span>
+              <span>Name</span><span>:</span><span className="uppercase">{currentStudent.name}</span>
+              <span>Father's Name</span><span>:</span><span className="uppercase">{currentStudent.fatherName}</span>
+              <span>Year</span><span>:</span><span className="uppercase">{currentStudent.academicYear}</span>
+              <span>Course</span><span>:</span><span className="uppercase">{currentStudent.branch}</span>
+            </div>
+
+            <div className="mt-4 pt-1 border-t border-slate-900 text-center">
+              <p className="text-[6px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
+            </div>
+
+            <div className="mt-2 border border-slate-900 p-1 text-[5px] leading-tight font-bold">
+              <span className="font-black text-slate-950">Note:</span> Parents are requested to preserve this receipt for future clarifications...
             </div>
           </div>
         </div>
         
-        <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 mt-2">
-          <div className="text-[11px] font-bold text-blue-800 mb-2 uppercase tracking-wider">Verification Guide</div>
-          <p className="text-[10px] text-blue-700 leading-relaxed">
-            Please ensure you have physically verified the original documents before checking them in the list. Once verified, the digital receipt will be generated for the student.
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 mt-2 shadow-sm">
+          <div className="text-[11px] font-bold text-blue-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+             <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+             Verification Guide
+          </div>
+          <p className="text-[10px] text-blue-700 leading-relaxed font-medium">
+            Please ensure you have physically verified the original documents before checking them in the list. The receipt will list all relevant documents.
           </p>
         </div>
       </div>
