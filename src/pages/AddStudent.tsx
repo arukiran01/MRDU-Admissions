@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { Student } from '../types';
+import { motion } from 'motion/react';
 
 export default function AddStudent() {
   const { addStudent } = useAppContext();
@@ -68,7 +69,12 @@ export default function AddStudent() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-3xl mx-auto space-y-5"
+    >
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-bold text-slate-800">Register New Student</h2>
       </div>
@@ -168,6 +174,21 @@ export default function AddStudent() {
                 placeholder="10-digit number"
               />
             </div>
+
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
+                Academic Year
+              </label>
+              <input
+                type="text"
+                name="academicYear"
+                value={formData.academicYear}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                placeholder="2026-2027"
+              />
+            </div>
           </div>
 
           <div className="pt-5 border-t border-slate-100 flex justify-end gap-3">
@@ -188,6 +209,6 @@ export default function AddStudent() {
           </div>
         </form>
       </div>
-    </div>
+    </motion.div>
   );
 }

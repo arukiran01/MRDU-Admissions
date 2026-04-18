@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2 } from 'lucide-react';
 
 export default function VerifyDocuments() {
   const { currentStudent, updateStudent, students, setCurrentStudent } = useAppContext();
   const navigate = useNavigate();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // If there's no current student, just pick the last one or redirect
   useEffect(() => {
@@ -51,12 +54,15 @@ export default function VerifyDocuments() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     updateStudent(currentStudent.id, {
       documents: docs,
       status: 'Verified',
     });
-    navigate('/receipt');
+    setShowSuccess(true);
+    setTimeout(() => {
+      navigate('/receipt');
+    }, 1500);
   };
 
   return (
@@ -126,7 +132,7 @@ export default function VerifyDocuments() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 relative overflow-hidden">
             <button
               onClick={handleSubmit}
               className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
@@ -139,6 +145,20 @@ export default function VerifyDocuments() {
             >
               Hold Application
             </button>
+            
+            <AnimatePresence>
+              {showSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="absolute inset-0 bg-emerald-50 text-emerald-700 flex items-center px-4 font-semibold text-sm rounded-md border border-emerald-200"
+                >
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Successfully Verified! Preparing receipt...
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -149,21 +169,31 @@ export default function VerifyDocuments() {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col gap-3">
           
           <div className="border border-dashed border-slate-300 p-3 rounded bg-white text-[9px] leading-[1.4]">
-            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">MALLA REDDY (MR) - STUDENT COPY</div>
+            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">
+              <div className="text-[10px]">MALLA REDDY (MR) - STUDENT COPY</div>
+              <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303</div>
+            </div>
             <p><strong>Name:</strong> {currentStudent.name}</p>
             <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
             <p><strong>Docs Verified:</strong> ...</p>
-            <p className="mt-2 text-[7px] text-center text-slate-500">Date: {new Date().toLocaleDateString()} | Signed by: Admin</p>
+            <div className="mt-4 pt-1 border-t border-slate-200 text-center">
+              <p className="text-[7px] text-slate-500 font-semibold">Authorized Signature</p>
+            </div>
           </div>
           
           <div className="border-t border-dashed border-slate-300"></div>
 
           <div className="border border-dashed border-slate-300 p-3 rounded bg-white text-[9px] leading-[1.4]">
-            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">MALLA REDDY (MR) - OFFICE COPY</div>
+            <div className="font-bold text-center border-b border-slate-100 pb-2 mb-2">
+               <div className="text-[10px]">MALLA REDDY (MR) - OFFICE COPY</div>
+               <div className="text-[6px] font-normal text-slate-500 mt-1">Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303</div>
+            </div>
             <p><strong>Name:</strong> {currentStudent.name}</p>
             <p><strong>ID:</strong> {currentStudent.admissionNo}</p>
              <p><strong>Docs Verified:</strong> ...</p>
-            <p className="mt-2 text-[7px] text-center text-slate-500">Date: {new Date().toLocaleDateString()} | Signed by: Admin</p>
+            <div className="mt-4 pt-1 border-t border-slate-200 text-center">
+              <p className="text-[7px] text-slate-500 font-semibold">Authorized Signature</p>
+            </div>
           </div>
 
           <button 

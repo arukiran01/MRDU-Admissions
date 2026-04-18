@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Dashboard() {
   const { students, auditLogs, setCurrentStudent, isLoading } = useAppContext();
@@ -51,7 +52,7 @@ export default function Dashboard() {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
-    XLSX.writeFile(workbook, 'MRDU_Students_Data.xlsx');
+    XLSX.writeFile(workbook, 'admissionslip.xlsx');
   };
 
   const filteredStudents = students.filter(
@@ -207,40 +208,55 @@ export default function Dashboard() {
                     </div>
                   </td>
                 </tr>
-              ) : filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-2 py-3 text-sm font-semibold text-slate-800">{student.admissionNo}</td>
-                  <td className="px-2 py-3 text-sm text-slate-500">{student.interHallTicket}</td>
-                  <td className="px-2 py-3 text-sm text-slate-700">{student.name}</td>
-                  <td className="px-2 py-3 text-sm text-slate-700">{student.branch}</td>
-                  <td className="px-2 py-3 text-sm text-slate-500">{student.academicYear}</td>
-                  <td className="px-2 py-3 text-sm">
-                    <span 
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
-                        student.status === 'Verified' 
-                          ? 'text-emerald-600 bg-emerald-50' 
-                          : 'text-amber-600 bg-amber-50'
-                      }`}
+              ) : (
+                <AnimatePresence>
+                  {filteredStudents.map((student, index) => (
+                    <motion.tr 
+                      key={student.id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2, delay: Math.min(index * 0.05, 0.5) }}
+                      className="hover:bg-slate-50 transition-colors"
                     >
-                      {student.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-2 py-3 text-right">
-                    <button 
-                      onClick={() => handleVerify(student)}
-                      className="text-[13px] text-blue-600 hover:text-blue-800 font-semibold"
-                    >
-                      {student.status === 'Verified' ? 'View/Print' : 'Verify Docs'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td className="px-2 py-3 text-sm font-semibold text-slate-800">{student.admissionNo}</td>
+                      <td className="px-2 py-3 text-sm text-slate-500">{student.interHallTicket}</td>
+                      <td className="px-2 py-3 text-sm text-slate-700">{student.name}</td>
+                      <td className="px-2 py-3 text-sm text-slate-700">{student.branch}</td>
+                      <td className="px-2 py-3 text-sm text-slate-500">{student.academicYear}</td>
+                      <td className="px-2 py-3 text-sm">
+                        <span 
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
+                            student.status === 'Verified' 
+                              ? 'text-emerald-600 bg-emerald-50' 
+                              : 'text-amber-600 bg-amber-50'
+                          }`}
+                        >
+                          {student.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-2 py-3 text-right">
+                        <button 
+                          onClick={() => handleVerify(student)}
+                          className="text-[13px] text-blue-600 hover:text-blue-800 font-semibold"
+                        >
+                          {student.status === 'Verified' ? 'View/Print' : 'Verify Docs'}
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              )}
               {!isLoading && filteredStudents.length === 0 && (
-                <tr>
+                <motion.tr
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <td colSpan={7} className="px-2 py-8 text-center text-slate-500 text-sm">
                     No matching students found based on current filters.
                   </td>
-                </tr>
+                </motion.tr>
               )}
             </tbody>
           </table>
@@ -255,27 +271,39 @@ export default function Dashboard() {
           </div>
           
           <div className="overflow-y-auto flex-1 pr-2 space-y-4">
-            {auditLogs.length > 0 ? auditLogs.map((log) => (
-              <div key={log.id} className="text-sm">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-semibold text-slate-800 text-[13px] inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
-                    {log.action}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium tracking-wider">
-                    {new Date(log.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-slate-600 text-[13px] leading-snug">{log.details}</p>
-                <div className="text-[10px] text-slate-400 mt-1">
-                  {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-                <hr className="mt-3 border-slate-100" />
-              </div>
-            )) : (
-              <div className="text-center text-slate-500 text-sm mt-8">
-                No recent activity.
-              </div>
-            )}
+            <AnimatePresence>
+              {auditLogs.length > 0 ? auditLogs.map((log, index) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.4) }}
+                  key={log.id} 
+                  className="text-sm"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-semibold text-slate-800 text-[13px] inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
+                      {log.action}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-wider">
+                      {new Date(log.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-[13px] leading-snug">{log.details}</p>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <hr className="mt-3 border-slate-100" />
+                </motion.div>
+              )) : (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center text-slate-500 text-sm mt-8"
+                >
+                  No recent activity.
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

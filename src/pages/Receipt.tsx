@@ -17,7 +17,10 @@ export default function Receipt() {
 
   const handlePrint = async () => {
     await logAction('Receipt Generation', `Generated receipt for student ${currentStudent.name} (Admission No: ${currentStudent.admissionNo}).`, currentStudent.id);
+    const originalTitle = document.title;
+    document.title = 'admissionslip';
     window.print();
+    document.title = originalTitle;
   };
 
   const checklistMap = [
@@ -33,8 +36,8 @@ export default function Receipt() {
     const tickedDocuments = checklistMap.filter(item => !!currentStudent.documents[item.key as keyof typeof currentStudent.documents]);
 
     return (
-    <div className="border border-slate-800 p-6 sm:p-8 bg-transparent print:bg-transparent relative">
-      <div className="text-center border-b border-gray-800 pb-4 mb-4 print:border-black">
+    <div className="border border-slate-800 p-4 sm:p-6 h-full flex flex-col bg-transparent print:bg-transparent relative">
+      <div className="text-center border-b border-gray-800 pb-3 mb-4 print:border-black">
         <div className="flex justify-center mb-2">
           <img src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" alt="MRDU Logo" className="h-14 w-auto grayscale print:grayscale-0" referrerPolicy="no-referrer" />
         </div>
@@ -44,8 +47,8 @@ export default function Receipt() {
           Recognised Under Section 3 of The UGC Act, 1956, Vide Notification No.9-5/2025-U.3(A)<br />
           by Department of Higher Education, Ministry of Education, Government of India.
         </p>
-        <p className="text-[11px] sm:text-xs font-semibold print:text-black mt-2">
-          www.mrdu.edu.in | Phone No: 9348161303
+        <p className="text-[10px] sm:text-[11px] font-semibold print:text-black mt-2">
+          Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </p>
       </div>
 
@@ -93,12 +96,16 @@ export default function Receipt() {
         )}
       </div>
 
+      <div className="flex-1"></div>
+
       {/* Signature block */}
-      <div className="flex justify-end mb-6 relative">
-        <div className="text-center">
+      <div className="flex justify-end mb-6 relative mt-auto pt-6">
+        <div className="text-center flex flex-col items-center">
+          <p className="font-semibold text-sm print:text-black mb-2">Authorized Signature</p>
           {/* Blank space for manual signature */}
-          <div className="mb-1 w-32 h-12 flex items-center justify-center relative"></div>
-          <p className="font-semibold text-sm print:text-black border-t border-gray-800 pt-2 px-4">Authorized Signature</p>
+          <div className="w-48 h-16 border-2 border-dashed border-gray-300 print:border-gray-400 bg-gray-50 print:bg-transparent rounded flex items-center justify-center relative">
+               <span className="text-gray-300 print:text-gray-400 text-xs italic">Sign Here</span>
+          </div>
         </div>
       </div>
 
@@ -111,8 +118,8 @@ export default function Receipt() {
   )};
 
   return (
-    <div className="min-h-screen bg-gray-200 py-8 print:py-0 print:bg-white font-sans text-gray-900">
-      <div className="max-w-[210mm] mx-auto print:mx-0">
+    <div className="min-h-screen bg-gray-200 py-8 print:py-0 print:bg-white font-sans text-gray-900 overflow-x-auto">
+      <div className="max-w-[1200px] min-w-[700px] mx-auto print:min-w-0 print:mx-0">
         
         {/* Print Action Bar (Hidden in print) */}
         <div className="flex justify-between items-center mb-6 print:hidden px-4">
@@ -134,11 +141,11 @@ export default function Receipt() {
         </div>
 
         {/* A4 Page Container */}
-        <div className="bg-white shadow-xl mx-auto print:shadow-none print:w-full print:h-screen overflow-hidden flex flex-col m-0 p-0">
+        <div className="bg-white shadow-xl mx-auto print:shadow-none w-full max-w-[1240px] aspect-[1.414/1] print:w-full print:h-screen print:max-w-none overflow-hidden flex flex-col m-0 p-0 origin-top">
           <style>
             {`
               @media print {
-                @page { size: A4 portrait; margin: 0; }
+                @page { size: A4 landscape; margin: 0; }
                 body { 
                   margin: 0;
                   padding: 0;
@@ -150,22 +157,22 @@ export default function Receipt() {
             `}
           </style>
           
-          {/* We want two identical receipts on one A4 page, usually takes ~50% each */}
-          <div className="flex-1 p-6 print:p-8 flex flex-col justify-between print:w-[210mm] print:h-[297mm]">
-            {/* Top Copy */}
-            <div className="mb-4">
-              <div className="text-right text-xs font-bold mb-1 text-gray-500 uppercase tracking-widest">Office Copy</div>
+          {/* We want two identical receipts side-by-side on an A4 Landscape page */}
+          <div className="flex-1 p-6 print:p-8 flex flex-row justify-between print:w-full print:h-full gap-8 print:gap-12 box-border">
+            {/* Left Copy */}
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="text-right text-[10px] font-bold mb-1 text-gray-500 uppercase tracking-widest">Office Copy</div>
               <ReceiptCopy />
             </div>
 
             {/* Cut Line */}
-            <div className="border-t-2 border-dashed border-gray-400 my-4 relative flex justify-center items-center">
-              <span className="bg-white px-4 text-gray-400 text-xs font-mono tracking-widest uppercase absolute">✂ Cut Here ✂</span>
+            <div className="border-l-2 border-dashed border-gray-400 mx-2 relative flex justify-center items-center">
+               <span className="bg-white py-4 text-gray-400 text-xs font-mono tracking-widest uppercase absolute whitespace-nowrap rotate-90">✂ Cut Here ✂</span>
             </div>
 
-            {/* Bottom Copy */}
-            <div className="mt-4">
-               <div className="text-right text-xs font-bold mb-1 text-gray-500 uppercase tracking-widest">Student Copy</div>
+            {/* Right Copy */}
+            <div className="flex-1 flex flex-col justify-center">
+               <div className="text-right text-[10px] font-bold mb-1 text-gray-500 uppercase tracking-widest">Student Copy</div>
               <ReceiptCopy />
             </div>
           </div>
