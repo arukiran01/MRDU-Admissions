@@ -86,107 +86,109 @@ export default function Receipt() {
     const checklistItems = getChecklistItems(currentStudent.program);
 
     return (
-    <div className="flex flex-col text-black w-full bg-white font-sans relative h-fit print:h-fit">
+    <div className="flex flex-col text-black w-full bg-white font-sans relative h-full"> 
       
       {/* Outer Labels */}
-      <div className={`font-black text-[10px] tracking-wide uppercase mb-1.5 ${isRight ? 'text-right' : 'text-left'}`}>
+      <div className={`font-black text-[11px] tracking-wider uppercase mb-2 ${isRight ? 'text-right' : 'text-left'}`}>
          {type}
       </div>
 
       {/* Main Container */}
-      <div className="border-[1.5px] border-black p-3 sm:p-4 flex flex-col bg-white">
+      <div className="border-[1.5px] border-black p-4 sm:p-5 flex flex-col bg-white flex-grow">
         
         {/* HEADER */}
-        <div className="flex flex-col items-center text-center pb-1">
+        <div className="flex flex-col items-center text-center pb-2">
            <img 
               src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
               alt="MRDU" 
-              className="h-10 w-10 object-contain mb-1" 
+              className="h-12 w-12 object-contain mb-1.5" 
               referrerPolicy="no-referrer"
            />
-           <h1 className="text-[14px] font-black uppercase tracking-tight leading-none mb-0.5">MALLA REDDY (MR)</h1>
-           <p className="font-bold text-[8px] uppercase tracking-wide mb-0.5">(DEEMED TO BE UNIVERSITY)</p>
-           <p className="font-bold text-[6px] tracking-wide">Recognised Under Section 3 of The UGC Act, 1956.</p>
+           <h1 className="text-[17px] font-black uppercase tracking-tight leading-none mb-1">MALLA REDDY (MR)</h1>
+           <p className="font-bold text-[10px] uppercase tracking-wide mb-1">(DEEMED TO BE UNIVERSITY)</p>
+           <p className="font-bold text-[7px] sm:text-[8px] tracking-wide">Recognised Under Section 3 of The UGC Act, 1956.</p>
         </div>
 
-        <div className="border-t-[1px] border-black mt-1 mb-[2px]"></div>
-        <div className="text-center font-bold text-[5.5px]">
+        <div className="border-t-[1px] border-black mt-1 mb-[3px]"></div>
+        <div className="text-center font-bold text-[8px] sm:text-[9px] px-2 leading-snug">
            Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </div>
-        <div className="border-t-[1px] border-black mt-[2px] mb-4"></div>
+        <div className="border-t-[1px] border-black mt-[3px] mb-6"></div>
 
-        <div className="text-center font-bold text-[10px] uppercase underline underline-offset-2 mb-5 tracking-wide">
+        <div className="text-center font-extrabold text-[13px] uppercase underline underline-offset-4 mb-6 tracking-wide">
            ADMISSIONS CERTIFICATION
         </div>
 
-        <div className="flex flex-col gap-[3px] mb-5 px-1">
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+        <div className="flex flex-col gap-2.5 mb-8 px-2">
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Enq.No</span>
               <span className="font-bold">: {currentStudent.admissionNo}</span>
            </div>
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
-              <span className="font-bold">Name of the student</span>
-              <span className="font-bold uppercase">: {currentStudent.name}</span>
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
+              <span className="font-bold">Student Name</span>
+              <span className="font-bold uppercase leading-snug">: {currentStudent.name}</span>
            </div>
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Fathers' Name</span>
-              <span className="font-bold uppercase">: {currentStudent.fatherName}</span>
+              <span className="font-bold uppercase leading-snug">: {currentStudent.fatherName}</span>
            </div>
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Academic Year</span>
               <span className="font-bold uppercase">: {currentStudent.academicYear}</span>
            </div>
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Program</span>
-              <span className="font-bold uppercase">: {currentStudent.program}</span>
+              <span className="font-bold uppercase leading-snug">: {currentStudent.program}</span>
            </div>
-           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Course Name</span>
-              <span className="font-bold uppercase">: {currentStudent.branch}</span>
+              <span className="font-bold uppercase leading-snug">: {currentStudent.branch}</span>
            </div>
         </div>
 
-        <div className="font-bold text-[8px] uppercase underline underline-offset-2 mb-2.5 px-1 tracking-wide">
+        <div className="font-extrabold text-[10px] sm:text-[11px] uppercase underline underline-offset-2 mb-4 px-2 tracking-wide">
            DOCUMENTS CHECKLIST:
         </div>
 
-        <div className="flex flex-col gap-[2px] mb-12 px-1">
+        <div className="flex flex-col gap-1.5 px-2 mb-8 flex-grow">
            {checklistItems.map(item => {
               const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
               return (
-                <div key={item.key} className="flex items-center gap-1.5">
-                   <div className="w-[10px] h-[10px] border-[1px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                     {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[6px] h-[6px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                <div key={item.key} className="flex items-center gap-2">
+                   <div className="w-3.5 h-3.5 border-[1.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                     {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                    </div>
-                   <span className="font-bold text-black uppercase text-[7px]">{item.label}</span>
+                   <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{item.label}</span>
                 </div>
               );
            })}
            
            {currentStudent.documents.others && (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                 <div className="w-[10px] h-[10px] border-[1px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[6px] h-[6px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="w-3.5 h-3.5 border-[1.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
                  </div>
-                 <span className="font-bold text-black uppercase text-[7px]">{currentStudent.documents.others}</span>
+                 <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{currentStudent.documents.others}</span>
               </div>
            )}
         </div>
 
-        <div className="flex justify-end mb-4 px-2">
-           <div className="flex flex-col items-center">
-              <div className="w-32 border-b-[1px] border-black mb-1"></div>
-              <span className="font-bold text-[7px] uppercase tracking-wide">Authorized Signature</span>
+        <div className="mt-auto">
+           <div className="flex justify-end mb-4 px-4 pt-8">
+              <div className="flex flex-col items-center">
+                 <div className="w-32 border-b-[1.5px] border-black mb-1.5"></div>
+                 <span className="font-bold text-[8px] uppercase tracking-wide">Authorized Signature</span>
+              </div>
            </div>
-        </div>
 
-        <div className="border-[1px] border-black px-2 py-1.5 mt-0">
-           <p className="font-bold text-[6px] leading-[1.3] text-left">
-              <span className="font-black">Note: </span>
-              Parents are requested to preserve this receipt for future clarifications in
-              respect of fee paid by you. Fee once paid will not be refunded or transferred.
-              Cheques subject to realization.
-           </p>
+           <div className="border-[1.5px] border-black px-3 py-2 bg-slate-50 print:bg-white text-justify">
+              <p className="font-bold text-[7px] sm:text-[8px] leading-[1.4] text-left">
+                 <span className="font-black uppercase mr-1">Note:</span>
+                 Parents are requested to preserve this receipt for future clarifications in
+                 respect of fee paid by you. Fee once paid will not be refunded or transferred.
+                 Cheques subject to realization.
+              </p>
+           </div>
         </div>
 
       </div>
@@ -239,7 +241,7 @@ export default function Receipt() {
 
         <div 
           ref={receiptRef}
-          className="bg-white print:bg-white shadow-2xl mx-auto print:shadow-none w-[210mm] flex flex-row relative box-border print:border-none p-4"
+          className="bg-white print:bg-white shadow-2xl mx-auto print:shadow-none w-[210mm] min-h-[297mm] flex flex-row relative box-border print:border-none p-4"
           style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
         >
           <style>
@@ -258,7 +260,7 @@ export default function Receipt() {
           </style>
 
           {/* Left Column - OFFICE COPY */}
-          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-fit">
+          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-full">
             <ReceiptCopy type="OFFICE COPY" isRight={false} />
           </div>
 
@@ -269,7 +271,7 @@ export default function Receipt() {
           </div>
 
           {/* Right Column - STUDENT COPY */}
-          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-fit">
+          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-full">
             <ReceiptCopy type="STUDENT COPY" isRight={true} />
           </div>
 
