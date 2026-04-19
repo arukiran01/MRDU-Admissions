@@ -22,6 +22,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dbStatus, setDbStatus] = useState<'connected' | 'error' | 'memory' | 'checking'>('checking');
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const checkHealth = async () => {
     if (supabase) {
@@ -64,10 +65,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
       
-      const data = (rawData || []).map((s: any) => ({
-        ...s,
-        status: s.status === 'Hold' ? 'Pending' : s.status
-      }));
+      const data = (rawData || [])
+        .filter((s: any) => !deletedIds.has(s.id))
+        .map((s: any) => ({
+          ...s,
+          status: s.status === 'Hold' ? 'Pending' : s.status
+        }));
       
       setStudents(data);
       
@@ -104,6 +107,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           { event: '*', schema: 'public', table: 'students' },
           (payload) => {
             console.log("Supabase: Realtime change detected:", payload.eventType);
+            // If it's a delete event from elsewhere, clear it from our guard set
+            if (payload.eventType === 'DELETE' && payload.old?.id) {
+              setDeletedIds(prev => {
+                const next = new Set(prev);
+                next.delete(payload.old.id);
+                return next;
+              });
+            }
             fetchStudents();
           }
         )
@@ -201,7 +212,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const previousStudents = [...students];
     const previousCurrent = currentStudent;
 
-    // Optimistic Delete
+    // 1. Mark as deleted in our local guard set
+    setDeletedIds(prev => new Set(prev).add(id));
+
+    // 2. Optimistic Delete from UI
     setStudents((prev) => prev.filter((s) => s.id !== id));
     if (currentStudent?.id === id) {
       setCurrentStudent(null);
@@ -214,24 +228,42 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       console.log(`Supabase: Attempting to delete student with ID: ${id}`);
-      const { error, status } = await supabase.from('students').delete().eq('id', id);
+      // Use .select() to verify if the row was actually returned/deleted.
+      // If RLS prevents deletion silently, data will be empty.
+      const { data, error, status } = await supabase.from('students').delete().eq('id', id).select();
       
       if (error) {
         console.error("Supabase Delete Error:", error.message, error.code);
         throw error;
       }
+
+      if (!data || data.length === 0) {
+        throw new Error("Supabase RLS blocked the deletion. Please run the following SQL in your Supabase SQL Editor to enable it:\n\nCREATE POLICY \"Enable delete for all users\" ON public.students AS PERMISSIVE FOR DELETE USING (true);");
+      }
       
       console.log(`Supabase Delete Status: ${status} (Success)`);
       
-      // Verification: Sometimes delete reports success but affects 0 rows if ID doesn't match
-      // We'll trust the refresh to fix the state if something went wrong
+      // Wait a small amount for DB synchronization before fetching
+      await new Promise(resolve => setTimeout(resolve, 800));
       await fetchStudents();
+
+      // Successfully confirmed gone, stop guarding
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } catch (e: any) {
       console.error("Failed deleting from Supabase:", e.message);
-      // Revert UI if delete failed
+      // Stop guarding and revert UI if delete failed
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       setStudents(previousStudents);
       setCurrentStudent(previousCurrent);
-      alert(`Delete failed: ${e.message || "Unknown error"}. The record has been restored.`);
+      alert(`Delete failed: ${e.message || "Unknown error"}\n\nThe record has been restored to the dashboard.`);
     }
   };
 
