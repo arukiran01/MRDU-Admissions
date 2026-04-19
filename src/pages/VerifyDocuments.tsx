@@ -224,14 +224,14 @@ export default function VerifyDocuments() {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
           
             <div className="border-[1.5px] border-slate-900 p-1.5 rounded bg-white text-[7px] leading-[1.2] font-black print:text-black">
-              <div className="text-center pb-1 mb-1 border-b-[0.5px] border-slate-200">
+              <div className="text-center pb-1 mb-1 border-b-[0.5px] border-slate-300">
                 <div className="text-[10px] font-black uppercase leading-none">MALLA REDDY (MR)</div>
-                <div className="text-[6.3px] font-black text-slate-800 mt-0.5 uppercase tracking-tighter">(DEEMED TO BE UNIVERSITY)</div>
-                <div className="text-[4.8px] font-bold text-slate-500 mt-0.25 leading-tight">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
+                <div className="text-[6.3px] font-black text-slate-900 mt-0.5 uppercase tracking-tighter">(DEEMED TO BE UNIVERSITY)</div>
+                <div className="text-[4.8px] font-bold text-slate-800 mt-0.25 leading-tight">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
               </div>
               
               <div className="flex justify-center mb-1">
-                <span className="text-[7.5px] underline underline-offset-1 font-black uppercase tracking-tight">ADMISSIONS CERTIFICATION</span>
+                <span className="text-[7.5px] underline underline-offset-1 font-black uppercase tracking-widest">DOCUMENTS RECEIPT</span>
               </div>
   
               <div className="grid grid-cols-[60px_5px_1fr] gap-y-0.2 text-[6.8px] font-black">

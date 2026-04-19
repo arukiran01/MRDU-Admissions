@@ -129,11 +129,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []); // Run on mount only
 
   const addStudent = async (student: Student) => {
-    if (!supabase) return false;
-
     const previousStudents = [...students];
+    
+    // Always update local state for immediate feedback
     setStudents((prev) => [student, ...prev]);
     setCurrentStudent(student);
+
+    if (!supabase) {
+      console.warn("Memory Mode: Student saved only to local state.");
+      setDbStatus('memory');
+      return true;
+    }
 
     try {
       const { error } = await supabase.from('students').insert([student]);
@@ -161,18 +167,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (e: any) {
       console.error("Failed adding to Supabase:", e.message);
+      // Revert if it was a real database error
       setStudents(previousStudents);
       return false;
     }
   };
 
   const updateStudent = async (id: string, data: Partial<Student>) => {
-    if (!supabase) return;
-
     const previousStudents = [...students];
+    
+    // Optimistic Update
     setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
     if (currentStudent?.id === id) {
       setCurrentStudent((prev) => (prev ? { ...prev, ...data } : null));
+    }
+
+    if (!supabase) {
+      console.warn("Memory Mode: Update saved only to local state.");
+      return;
     }
 
     try {
@@ -186,21 +198,40 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteStudent = async (id: string) => {
-    if (!supabase) return;
-
     const previousStudents = [...students];
+    const previousCurrent = currentStudent;
+
+    // Optimistic Delete
     setStudents((prev) => prev.filter((s) => s.id !== id));
     if (currentStudent?.id === id) {
       setCurrentStudent(null);
     }
 
+    if (!supabase) {
+      console.warn("Memory Mode: Student removed from local state.");
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('students').delete().eq('id', id);
-      if (error) throw error;
+      console.log(`Supabase: Attempting to delete student with ID: ${id}`);
+      const { error, status } = await supabase.from('students').delete().eq('id', id);
+      
+      if (error) {
+        console.error("Supabase Delete Error:", error.message, error.code);
+        throw error;
+      }
+      
+      console.log(`Supabase Delete Status: ${status} (Success)`);
+      
+      // Verification: Sometimes delete reports success but affects 0 rows if ID doesn't match
+      // We'll trust the refresh to fix the state if something went wrong
       await fetchStudents();
     } catch (e: any) {
       console.error("Failed deleting from Supabase:", e.message);
+      // Revert UI if delete failed
       setStudents(previousStudents);
+      setCurrentStudent(previousCurrent);
+      alert(`Delete failed: ${e.message || "Unknown error"}. The record has been restored.`);
     }
   };
 

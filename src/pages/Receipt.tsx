@@ -87,36 +87,36 @@ export default function Receipt() {
 
     return (
     <div className="border-[1.5px] border-slate-900 p-2 h-full flex flex-col bg-white print:bg-white relative">
-      <div className="text-center pb-1 mb-2 border-b-[0.5px] border-slate-300 print:border-slate-900">
+      <div className="text-center pb-1 mb-2 border-b-[0.5px] border-slate-400 print:border-slate-900">
         <div className="flex justify-center mb-0.5">
           <img 
             src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
             alt="MRDU Logo" 
-            className="h-9 w-auto" 
+            className="h-10 w-auto" 
             referrerPolicy="no-referrer" 
           />
         </div>
-        <h1 className="text-[16px] font-black uppercase tracking-tight mb-0.5 print:text-black leading-none">MALLA REDDY (MR)</h1>
+        <h1 className="text-[17px] font-black uppercase tracking-tight mb-0 print:text-black leading-none">MALLA REDDY (MR)</h1>
         <div className="flex flex-col items-center gap-0">
-          <p className="text-[9.5px] font-black text-slate-800 print:text-black uppercase tracking-tighter leading-tight">
+          <p className="text-[10px] font-black text-slate-900 print:text-black uppercase tracking-tighter leading-tight">
             (DEEMED TO BE UNIVERSITY)
           </p>
-          <p className="text-[7px] font-bold text-slate-700 print:text-black leading-tight">
+          <p className="text-[7.5px] font-bold text-slate-800 print:text-black leading-tight">
             Recognised Under Section 3 of The UGC Act, 1956.
           </p>
         </div>
-        <p className="text-[7px] font-black print:text-black mt-1 leading-tight border-t-[1px] border-slate-900 pt-1 pb-0.5">
+        <p className="text-[7px] font-black print:text-black mt-1 leading-tight border-t-[0.5px] border-slate-900 pt-1 pb-0.5">
           Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </p>
       </div>
 
       <div className="flex justify-center mb-2">
-        <h2 className="text-[12px] font-black underline underline-offset-3 uppercase print:text-black tracking-normal">
-          ADMISSIONS CERTIFICATION
+        <h2 className="text-[12px] font-black underline underline-offset-3 uppercase print:text-black tracking-widest">
+          DOCUMENTS RECEIPT
         </h2>
       </div>
 
-      <div className="grid grid-cols-[125px_10px_1fr] sm:grid-cols-[150px_10px_1fr] gap-y-0.5 mb-2 text-[10.5px] font-black print:text-black">
+      <div className="grid grid-cols-[125px_10px_1fr] sm:grid-cols-[140px_10px_1fr] gap-y-0.5 mb-2 text-[10px] font-black print:text-black leading-tight">
         <div>Enq.No</div>
         <div>:</div>
         <div className="uppercase">{currentStudent.admissionNo}</div>

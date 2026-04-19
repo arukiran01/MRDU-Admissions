@@ -64,10 +64,17 @@ export default function Dashboard() {
 
   const handleDeleteStudent = async () => {
     if (!studentToDelete) return;
-    setIsDeleting(true);
-    await deleteStudent(studentToDelete.id);
-    setIsDeleting(false);
-    setStudentToDelete(null);
+    try {
+      setIsDeleting(true);
+      console.log(`Dashboard: Initiating deletion for student ${studentToDelete.name} (${studentToDelete.id})`);
+      await deleteStudent(studentToDelete.id);
+      console.log(`Dashboard: Deletion successful for ${studentToDelete.id}`);
+      setStudentToDelete(null);
+    } catch (error) {
+      console.error("Dashboard: Deletion failed:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleDownloadExcel = () => {
