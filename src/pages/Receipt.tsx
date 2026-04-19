@@ -133,6 +133,10 @@ export default function Receipt() {
         <div>:</div>
         <div className="uppercase">{currentStudent.academicYear}</div>
 
+        <div>Program</div>
+        <div>:</div>
+        <div className="uppercase">{currentStudent.program}</div>
+
         <div>Course Name</div>
         <div>:</div>
         <div className="uppercase">{currentStudent.branch}</div>

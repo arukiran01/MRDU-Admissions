@@ -248,6 +248,7 @@ export default function VerifyDocuments() {
                 <span>Name</span><span>:</span><span className="uppercase">{currentStudent.name}</span>
                 <span>Father's Name</span><span>:</span><span className="uppercase">{currentStudent.fatherName}</span>
                 <span>Year</span><span>:</span><span className="uppercase">{currentStudent.academicYear}</span>
+                <span>Program</span><span>:</span><span className="uppercase">{currentStudent.program}</span>
                 <span>Course</span><span>:</span><span className="uppercase">{currentStudent.branch}</span>
               </div>
   

@@ -17,6 +17,7 @@ export default function AddStudent() {
     name: '',
     admissionNo: '',
     fatherName: '',
+    program: 'UG' as 'UG' | 'PG' | 'PHD',
     branch: '',
     parentPhone: '',
     interHallTicket: '',
@@ -26,15 +27,20 @@ export default function AddStudent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
 
-  const branches = [
-    'CSE',
-    'CSE (AIML)',
-    'CSE (Data Science)',
-    'ECE',
-    'EEE',
-    'Mechanical',
-    'Civil',
-  ];
+  const programs = ['UG', 'PG', 'PHD'];
+
+  const getBranches = (program: string) => {
+    switch (program) {
+      case 'UG':
+        return ['CSE', 'CSE-AI&ML', 'CSE-DS', 'CSE-CS', 'ECE', 'EEE', 'CIVIL', 'MECH', 'BBA', 'BCA', 'BIO-TECHNOLOGY'];
+      case 'PG':
+        return ['CSE', 'ELECTRICAL POWER SYSTEMS', 'STRUCTURAL ENGINEERING', 'VLSI & EMBEDDED SYSTEMS', 'THERMAL ENGINEERING', 'MBA', 'MCA'];
+      case 'PHD':
+        return ['CSE', 'EEE', 'ECE', 'MECH', 'CIVIL', 'MATHS', 'ENGLISH'];
+      default:
+        return [];
+    }
+  };
 
   const validatePhone = (phone: string) => {
     return /^[6-9]\d{9}$/.test(phone);
@@ -42,7 +48,28 @@ export default function AddStudent() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Constraints logic
+    if (name === 'admissionNo' || name === 'interHallTicket') {
+      // Numbers only
+      if (value !== '' && !/^\d+$/.test(value)) return;
+    }
+    
+    if (name === 'name' || name === 'fatherName') {
+      // Text and spaces only (including uppercase automatic transformation)
+      if (value !== '' && !/^[a-zA-Z\s]+$/.test(value)) return;
+    }
+
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      
+      // Reset branch if program changes
+      if (name === 'program') {
+        newData.branch = '';
+      }
+      
+      return newData;
+    });
     
     if (name === 'parentPhone') {
       if (value.length > 0 && !validatePhone(value)) {
@@ -56,7 +83,12 @@ export default function AddStudent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Final validation check
+    // Final checks
+    if (!formData.name.trim() || !formData.admissionNo.trim() || !formData.branch) {
+      alert("Please fill all required fields correctly.");
+      return;
+    }
+
     if (!validatePhone(formData.parentPhone)) {
       setPhoneError(true);
       alert("Please enter a valid 10-digit Indian mobile number.");
@@ -66,12 +98,11 @@ export default function AddStudent() {
     setIsSubmitting(true);
     
     const newStudent: Student = {
-      // Using interHallTicket as the primary key ID per user request
       id: formData.interHallTicket.trim(),
       ...formData,
-      name: formData.name.trim(),
+      name: formData.name.trim().toUpperCase(),
       admissionNo: formData.admissionNo.trim(),
-      fatherName: formData.fatherName.trim(),
+      fatherName: formData.fatherName.trim().toUpperCase(),
       parentPhone: formData.parentPhone.trim(),
       interHallTicket: formData.interHallTicket.trim(),
       academicYear: formData.academicYear.trim(),
@@ -131,7 +162,7 @@ export default function AddStudent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Student Full Name
+                Student Full Name (Text only)
               </label>
               <input
                 type="text"
@@ -146,7 +177,7 @@ export default function AddStudent() {
             
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Inter Hall Ticket (Primary Key)
+                Inter Hall Ticket (Numbers only)
               </label>
               <input
                 type="text"
@@ -155,13 +186,13 @@ export default function AddStudent() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Enter Inter Hall Ticket No"
+                placeholder="Ex: 23145678"
               />
             </div>
 
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Admission / Enquiry No.
+                Admission / Enquiry No. (Numbers only)
               </label>
               <input
                 type="text"
@@ -170,13 +201,13 @@ export default function AddStudent() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="2332"
+                placeholder="e.g. 2332"
               />
             </div>
 
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Father's Name
+                Father's Name (Text only)
               </label>
               <input
                 type="text"
@@ -191,6 +222,23 @@ export default function AddStudent() {
 
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
+                Program
+              </label>
+              <select
+                name="program"
+                value={formData.program}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white outline-none"
+              >
+                {programs.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
                 Branch / Course
               </label>
               <select
@@ -201,7 +249,7 @@ export default function AddStudent() {
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white outline-none"
               >
                 <option value="">Select Branch</option>
-                {branches.map(b => (
+                {getBranches(formData.program).map(b => (
                   <option key={b} value={b}>{b}</option>
                 ))}
               </select>

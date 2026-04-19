@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [programFilter, setProgramFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
@@ -77,6 +78,7 @@ export default function Dashboard() {
         'Inter Hall Ticket': s.interHallTicket,
         'Student Name': s.name,
         'Father Name': s.fatherName,
+        'Program': s.program,
         'Branch': s.branch,
         'Parent Phone': s.parentPhone,
         'Academic Year': s.academicYear,
@@ -110,9 +112,10 @@ export default function Dashboard() {
       
       const branchMatch = branchFilter ? s.branch === branchFilter : true;
       const statusMatch = statusFilter ? s.status === statusFilter : true;
+      const programMatch = programFilter ? s.program === programFilter : true;
       const yearMatch = yearFilter ? s.academicYear === yearFilter : true;
       
-      return searchMatch && branchMatch && statusMatch && yearMatch;
+      return searchMatch && branchMatch && statusMatch && programMatch && yearMatch;
     }
   );
 
@@ -226,6 +229,17 @@ export default function Dashboard() {
             </select>
 
             <select 
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
+            >
+              <option value="">All Programs</option>
+              <option value="UG">UG</option>
+              <option value="PG">PG</option>
+              <option value="PHD">PHD</option>
+            </select>
+
+            <select 
               value={yearFilter}
               onChange={(e) => setYearFilter(e.target.value)}
               className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
@@ -242,6 +256,7 @@ export default function Dashboard() {
               <th className="px-2 py-3 font-semibold">Adm No.</th>
               <th className="px-2 py-3 font-semibold">Hall Ticket</th>
               <th className="px-2 py-3 font-semibold">Student Name</th>
+              <th className="px-2 py-3 font-semibold">Program</th>
               <th className="px-2 py-3 font-semibold">Branch</th>
               <th className="px-2 py-3 font-semibold">Year</th>
               <th className="px-2 py-3 font-semibold">Status</th>
@@ -251,7 +266,7 @@ export default function Dashboard() {
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
                <tr>
-                <td colSpan={7} className="px-2 py-8 text-center bg-white text-slate-500 text-sm">
+                <td colSpan={8} className="px-2 py-8 text-center bg-white text-slate-500 text-sm">
                   <div className="flex flex-col items-center justify-center">
                     <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
                     Loading database...
@@ -272,6 +287,7 @@ export default function Dashboard() {
                     <td className="px-2 py-3 text-sm font-semibold text-slate-800">{student.admissionNo}</td>
                     <td className="px-2 py-3 text-sm text-slate-500">{student.interHallTicket}</td>
                     <td className="px-2 py-3 text-sm text-slate-700">{student.name}</td>
+                    <td className="px-2 py-3 text-sm font-bold text-blue-600">{student.program}</td>
                     <td className="px-2 py-3 text-sm text-slate-700">{student.branch}</td>
                     <td className="px-2 py-3 text-sm text-slate-500">{student.academicYear}</td>
                     <td className="px-2 py-3 text-sm">
@@ -323,7 +339,7 @@ export default function Dashboard() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <td colSpan={7} className="px-2 py-8 text-center text-slate-500 text-sm">
+                <td colSpan={8} className="px-2 py-8 text-center text-slate-500 text-sm">
                   No matching students found based on current filters.
                 </td>
               </motion.tr>
