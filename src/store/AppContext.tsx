@@ -46,11 +46,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         const text = await response.text();
-        console.error(`Health check failed (${response.status}):`, text.substring(0, 50));
+        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+          console.error("Vercel Function Error: The backend failed to start. Check Vercel logs or Environment Variables.");
+        } else {
+          console.error(`Health check failed (${response.status}):`, text.substring(0, 50));
+        }
         setDbStatus('error');
       }
     } catch (e: any) {
       console.error("Health check fetch error (Failed to fetch):", e.message);
+      console.warn("Hint: This often means the server is DOWN or your VPN/Proxy/Adblocker is blocking the request.");
       setDbStatus('error');
     }
   };
@@ -157,7 +162,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (e: any) {
       console.error("Failed adding to backend:", e);
-      alert(`Sync Error: ${e.message}`);
+      // alert(`Sync Error: ${e.message}`); // Removed intrusive alert
       setStudents(previousStudents);
       await fetchStudents();
       return false;
@@ -192,7 +197,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await fetchStudents();
     } catch (e: any) {
       console.error("Failed updating backend:", e);
-      alert(`Sync Error: ${e.message}`);
+      // alert(`Sync Error: ${e.message}`); // Removed intrusive alert
       setStudents(previousStudents);
     }
   };

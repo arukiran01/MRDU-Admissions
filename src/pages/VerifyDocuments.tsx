@@ -207,7 +207,7 @@ export default function VerifyDocuments() {
               onClick={handleHold}
               className="px-5 py-2.5 bg-transparent border border-slate-200 text-slate-800 text-sm font-semibold rounded-md hover:bg-slate-50 active:scale-95 transition-all"
             >
-              Hold Application
+              Keep on Hold (Pending)
             </button>
             
             <AnimatePresence>

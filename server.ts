@@ -1,6 +1,7 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import * as path from 'path';
+import 'dotenv/config';
 
 const app = express();
 const PORT = 3000;
@@ -244,25 +245,38 @@ async function setupFrontend() {
   }
 }
 
-// === STARTUP ===
-async function start() {
-  await setupFrontend();
-  
-  // Always listen if we're in development or if explicitly not on Vercel
-  // Even on Vercel, this won't hurt as Vercel ignores the listen call in serverless mode
-  // but it ensures we start correctly in this environment.
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend Ready: Listening on port ${PORT}`);
-  });
+// === STARTUP (LOCAL & PREVIEW) ===
+// In AI Studio and local development, we MUST listen on port 3000.
+// On Vercel (Production), the function is managed by their runtime.
+const isVercelProduction = process.env.VERCEL === '1' && process.env.NODE_ENV === 'production';
+
+async function startServer() {
+  console.log("Backend: Starting initialization...");
+  try {
+    await setupFrontend();
+    
+    // Always listen unless we are strictly in Vercel Production
+    if (!isVercelProduction) {
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Backend Ready: Listening on http://0.0.0.0:${PORT}`);
+      });
+      
+      server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          console.warn(`Backend: Port ${PORT} already in use. Skipping listen.`);
+        } else {
+          console.error("Backend: Server error:", err);
+        }
+      });
+    } else {
+      console.log("Backend: Running in Vercel Production mode. Skipping explicit listen.");
+    }
+  } catch (err) {
+    console.error("Backend: Initialization failed:", err);
+  }
 }
 
-// Only run automatically if this is the main entry point
-// In ESM, we can check process.argv
-if (process.argv[1] && (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.js'))) {
-  start();
-} else {
-  // If being imported (e.g. by a test or Vercel), just setup frontend but don't listen
-  setupFrontend();
-}
+// Start the server
+startServer();
 
 export default app;
