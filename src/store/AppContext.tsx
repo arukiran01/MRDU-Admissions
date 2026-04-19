@@ -1,14 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Student } from '../types';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase Client for Frontend (Real-time)
-const MANUAL_SUPABASE_URL = "https://laaholzwfjahuugaqzfh.supabase.co";
-const MANUAL_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhYWhvbHp3ZmphaHV1Z2FxemZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0OTgyNjAsImV4cCI6MjA5MjA3NDI2MH0._qdq6eFs1pnYUQ5mCMqbVbIql7IX60Qsax8Te5W6JC8";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || MANUAL_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || MANUAL_SUPABASE_KEY;
-const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+import { supabase } from '../lib/supabase';
 
 interface AppContextType {
   students: Student[];
@@ -32,64 +24,54 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [dbStatus, setDbStatus] = useState<'connected' | 'error' | 'memory' | 'checking'>('checking');
 
   const checkHealth = async () => {
-    try {
-      const response = await fetch('/api/health');
-      if (response.ok) {
-        const data = await response.json();
-        // Be very strict: only mark connected if it's NOT disconnected
-        if (data.database === 'disconnected' || data.database === 'memory-fallback') {
-          setDbStatus('memory');
-        } else if (data.database === 'connected-as-anon' || data.database === 'connected-as-service-role') {
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('students').select('id', { count: 'exact', head: true }).limit(1);
+        if (!error) {
           setDbStatus('connected');
         } else {
-          setDbStatus('memory');
+          console.error("Supabase Connection Check failed:", error.message);
+          setDbStatus('error');
         }
-      } else {
-        const text = await response.text();
-        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
-          console.error("Vercel Function Error: The backend failed to start. Check Vercel logs or Environment Variables.");
-        } else {
-          console.error(`Health check failed (${response.status}):`, text.substring(0, 50));
-        }
+      } catch (e) {
         setDbStatus('error');
       }
-    } catch (e: any) {
-      console.error("Health check fetch error (Failed to fetch):", e.message);
-      console.warn("Hint: This often means the server is DOWN or your VPN/Proxy/Adblocker is blocking the request.");
-      setDbStatus('error');
+    } else {
+      setDbStatus('memory');
     }
   };
 
   const fetchStudents = async () => {
+    if (!supabase) {
+      console.warn("Supabase: Client missing. Cannot fetch.");
+      setDbStatus('memory');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/students?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-      });
+      const { data: rawData, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('createdAt', { ascending: false });
       
-      if (response.ok) {
-        try {
-          const rawData = await response.json();
-          // Normalize status: treat 'Hold' as 'Pending' for UI consistency
-          const data = rawData.map((s: any) => ({
-            ...s,
-            status: s.status === 'Hold' ? 'Pending' : s.status
-          }));
-          
-          setStudents((prev) => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
-          
-          if (currentStudent) {
-            const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
-            if (freshCurrent && JSON.stringify(freshCurrent) !== JSON.stringify(currentStudent)) {
-              setCurrentStudent(freshCurrent);
-            }
-          }
-        } catch (parseError) {
-          const text = await response.text();
-          console.error("Fetch Students JSON Parse Error:", parseError, "Response Text:", text.substring(0, 100));
-        }
+      if (error) throw error;
+      
+      const data = (rawData || []).map((s: any) => ({
+        ...s,
+        status: s.status === 'Hold' ? 'Pending' : s.status
+      }));
+      
+      setStudents(data);
+      
+      if (currentStudent) {
+        const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
+        if (freshCurrent) setCurrentStudent(freshCurrent);
       }
-    } catch (error) {
-      console.error("Fetch Error:", error);
+      setDbStatus('connected');
+    } catch (error: any) {
+      console.error("Fetch Error:", error.message);
+      setDbStatus('error');
     } finally {
       setIsLoading(false);
     }
@@ -136,40 +118,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []); // Run on mount only
 
   const addStudent = async (student: Student) => {
+    if (!supabase) return false;
+
     const previousStudents = [...students];
     setStudents((prev) => [student, ...prev]);
     setCurrentStudent(student);
 
     try {
-      const response = await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(student)
-      });
+      const { error } = await supabase.from('students').insert([student]);
       
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMessage = "Database insertion failed";
-        try {
-          const data = JSON.parse(text);
-          errorMessage = data.error || (data.details ? `${data.error}: ${data.details}` : errorMessage);
-        } catch (e) {
-          errorMessage = `Server Error (${response.status}): ${text.substring(0, 100)}...`;
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("A student with this Inter Hall Ticket already exists.");
         }
-        throw new Error(errorMessage);
+        throw error;
       }
+      
+      // Google Sheets Webhook Sync (optional client-side)
+      const sheetsWebhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
+      if (sheetsWebhookUrl) {
+        fetch(sheetsWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(student)
+        }).catch(err => console.error("Sheets sync failed:", err));
+      }
+
       await fetchStudents();
       return true;
     } catch (e: any) {
-      console.error("Failed adding to backend:", e);
-      // alert(`Sync Error: ${e.message}`); // Removed intrusive alert
+      console.error("Failed adding to Supabase:", e.message);
       setStudents(previousStudents);
-      await fetchStudents();
       return false;
     }
   };
 
   const updateStudent = async (id: string, data: Partial<Student>) => {
+    if (!supabase) return;
+
     const previousStudents = [...students];
     setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
     if (currentStudent?.id === id) {
@@ -177,51 +163,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMessage = "Update failed";
-        try {
-          const resData = JSON.parse(text);
-          errorMessage = resData.error || errorMessage;
-        } catch (e) {
-          errorMessage = `Server Error (${response.status}): ${text.substring(0, 100)}...`;
-        }
-        throw new Error(errorMessage);
-      }
+      const { error } = await supabase.from('students').update(data).eq('id', id);
+      if (error) throw error;
       await fetchStudents();
     } catch (e: any) {
-      console.error("Failed updating backend:", e);
-      // alert(`Sync Error: ${e.message}`); // Removed intrusive alert
+      console.error("Failed updating Supabase:", e.message);
       setStudents(previousStudents);
     }
   };
 
   const deleteStudent = async (id: string) => {
-    const previousStudents = [...students];
+    if (!supabase) return;
 
-    // Optimistic UI update
+    const previousStudents = [...students];
     setStudents((prev) => prev.filter((s) => s.id !== id));
     if (currentStudent?.id === id) {
       setCurrentStudent(null);
     }
 
-    // Backend sync
     try {
-      const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error("Deletion failed");
-      
+      const { error } = await supabase.from('students').delete().eq('id', id);
+      if (error) throw error;
       await fetchStudents();
-    } catch (e) {
-      console.error("Failed deleting from backend:", e);
+    } catch (e: any) {
+      console.error("Failed deleting from Supabase:", e.message);
       setStudents(previousStudents);
     }
   };
