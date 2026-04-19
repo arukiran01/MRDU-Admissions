@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Student } from '../types';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Client for Frontend (Real-time)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 interface AppContextType {
   students: Student[];
@@ -22,20 +28,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('/api/students');
+      const response = await fetch(`/api/students?t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
+      
       if (response.ok) {
         const data = await response.json();
+        setStudents((prev) => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
         
-        // Use functional state update to avoid stale closures
-        setStudents((prevStudents) => {
-          // If the data is actually different, update it
-          if (JSON.stringify(prevStudents) !== JSON.stringify(data)) {
-            return data;
-          }
-          return prevStudents;
-        });
-        
-        // Ensure currentStudent matches the fresh data
         if (currentStudent) {
           const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
           if (freshCurrent && JSON.stringify(freshCurrent) !== JSON.stringify(currentStudent)) {
@@ -44,21 +44,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch students backend:", error);
+      console.error("Fetch Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch initial data and setup background polling for real-time accuracy
+  // Real-time Subscriptions + Fallback Polling
   useEffect(() => {
-    // Immediate fetch on mount
     fetchStudents();
+
+    let subscription: any = null;
+
+    if (supabase) {
+      console.log("Initializing Supabase Real-time Subscription...");
+      subscription = supabase
+        .channel('students-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, (payload) => {
+          console.log('Real-time change detected:', payload);
+          fetchStudents(); // Trigger fresh fetch on any change
+        })
+        .subscribe();
+    }
+
+    const interval = setInterval(fetchStudents, 5000); // Polling as backup
     
-    // Background polling every 3 seconds for active sessions
-    const interval = setInterval(fetchStudents, 3000);
-    return () => clearInterval(interval);
-  }, [currentStudent?.id]); // Watch ID changes for context specific refresh
+    return () => {
+      if (subscription) supabase?.removeChannel(subscription);
+      clearInterval(interval);
+    };
+  }, [currentStudent?.id]);
 
   const addStudent = async (student: Student) => {
     // Optimistic UI update
