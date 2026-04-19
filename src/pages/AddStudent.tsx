@@ -94,7 +94,7 @@ export default function AddStudent() {
     const success = await addStudent(newStudent);
     setIsSubmitting(false);
     if (success) {
-      navigate('/verify');
+      navigate('/dashboard');
     }
   };
 

@@ -1,4 +1,4 @@
-import { Users, UserCheck, Clock, Search, Download, Filter, Edit, X, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, UserCheck, Clock, Search, Download, Filter, Edit, X, Save, Trash2, AlertTriangle, CheckCircle2, FileText, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import React, { useState } from 'react';
@@ -15,18 +15,37 @@ export default function Dashboard() {
   const [yearFilter, setYearFilter] = useState('');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [actionStudent, setActionStudent] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const branches = [...new Set(students.map(s => s.branch))];
   const academicYears = [...new Set(students.map(s => s.academicYear))];
 
-  const handleVerify = (student: Student) => {
-    setCurrentStudent(student);
-    if (student.status === 'Verified') {
-      navigate('/receipt');
-    } else {
-      navigate('/verify');
-    }
+  const handleAction = (student: Student) => {
+    setActionStudent(student);
+  };
+
+  const handleChangeStatus = async (status: 'Pending' | 'Verified') => {
+    if (!actionStudent) return;
+    setIsUpdatingStatus(true);
+    await updateStudent(actionStudent.id, { status });
+    setIsUpdatingStatus(false);
+    setActionStudent(null);
+  };
+
+  const handleVerifyNavigate = () => {
+    if (!actionStudent) return;
+    setCurrentStudent(actionStudent);
+    navigate('/verify');
+    setActionStudent(null);
+  };
+
+  const handlePrintNavigate = () => {
+    if (!actionStudent) return;
+    setCurrentStudent(actionStudent);
+    navigate('/receipt');
+    setActionStudent(null);
   };
 
   const handleEditClick = (student: Student) => {
@@ -283,10 +302,14 @@ export default function Dashboard() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <button 
-                          onClick={() => handleVerify(student)}
-                          className="px-3 py-1 text-[12px] text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded font-semibold transition-all ml-1"
+                          onClick={() => handleAction(student)}
+                          className={`px-3 py-1 text-[12px] font-bold rounded transition-all ml-1 ${
+                            student.status === 'Verified'
+                              ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                              : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                          }`}
                         >
-                          {student.status === 'Verified' ? 'View/Print' : 'Verify'}
+                          {student.status === 'Verified' ? 'View Slip' : 'Take Action'}
                         </button>
                       </div>
                     </td>
@@ -309,7 +332,93 @@ export default function Dashboard() {
         </table>
       </div>
     </div>
-      {/* Edit Modal */}
+      {/* Action Selection Modal */}
+      <AnimatePresence>
+        {actionStudent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActionStudent(null)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 text-center">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                  actionStudent.status === 'Verified' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                }`}>
+                  <Send className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Choose Action</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  How would you like to proceed with <span className="font-bold text-slate-800">{actionStudent.name}</span>?
+                </p>
+              </div>
+
+              <div className="p-4 space-y-2">
+                {actionStudent.status === 'Verified' ? (
+                  <>
+                    <button 
+                      onClick={handlePrintNavigate}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all group font-semibold shadow-md shadow-emerald-100"
+                    >
+                      <div className="flex items-center">
+                        <FileText className="w-5 h-5 mr-3 opacity-80" />
+                        <span>View / Print Receipt</span>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => handleChangeStatus('Pending')}
+                      disabled={isUpdatingStatus}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all font-medium"
+                    >
+                      <div className="flex items-center">
+                        <Clock className="w-5 h-5 mr-3 text-amber-500" />
+                        <span>Mark as Pending</span>
+                      </div>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={handleVerifyNavigate}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all group font-semibold shadow-md shadow-blue-100"
+                    >
+                      <div className="flex items-center">
+                        <CheckCircle2 className="w-5 h-5 mr-3 opacity-80" />
+                        <span>Verify Documents Now</span>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => handleChangeStatus('Verified')}
+                      disabled={isUpdatingStatus}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all font-medium"
+                    >
+                      <div className="flex items-center">
+                        <UserCheck className="w-5 h-5 mr-3 text-emerald-500" />
+                        <span>Quick Mark as Verified</span>
+                      </div>
+                    </button>
+                  </>
+                )}
+                
+                <button 
+                  onClick={() => setActionStudent(null)}
+                  className="w-full py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {editingStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

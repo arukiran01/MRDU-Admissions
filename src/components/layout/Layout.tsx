@@ -26,7 +26,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Add Student', path: '/add-student', icon: UserPlus },
-    { name: 'Document Verification', path: '/verify', icon: CheckSquare },
     { name: 'Reports', path: '/reports', icon: FileText },
   ];
 
