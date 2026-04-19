@@ -232,11 +232,11 @@ export default function Receipt() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 print:py-0 print:bg-white font-sans text-slate-900 overflow-x-auto">
-      <div className="max-w-[1400px] min-w-[1100px] mx-auto print:min-w-0 print:mx-0">
+    <div className="min-h-screen bg-slate-100 py-8 print:py-0 print:bg-white font-sans text-slate-900 overflow-x-hidden">
+      <div className="w-full max-w-[850px] mx-auto px-4 print:px-0 print:max-w-none print:mx-0">
         
         {/* Print Action Bar (Hidden in print) */}
-        <div className="flex justify-between items-center mb-6 print:hidden px-6">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6 print:hidden">
           <button 
             onClick={() => navigate('/dashboard')}
             className="flex items-center px-5 py-2.5 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 font-semibold transition-all"
@@ -276,12 +276,12 @@ export default function Receipt() {
 
         <div 
           ref={receiptRef}
-          className="bg-white shadow-2xl mx-auto print:shadow-none w-full aspect-[1/1.414] print:w-full print:h-[297mm] overflow-hidden flex flex-col m-0 p-0"
+          className="bg-white shadow-2xl mx-auto print:shadow-none w-full flex flex-col m-0 p-6 sm:p-10 print:p-0 box-border"
         >
           <style>
             {`
               @media print {
-                @page { size: A4 portrait; margin: 0; }
+                @page { size: A4 portrait; margin: 12mm; }
                 body { 
                   margin: 0;
                   padding: 0;
@@ -291,36 +291,26 @@ export default function Receipt() {
             `}
           </style>
           
-          {/* Twin Copy Layout (Vertical) */}
-          <div className="flex-1 p-8 flex flex-col print:w-full print:h-full gap-8 box-border">
+          {/* Twin Copy Layout (Vertical Natural Flow) */}
+          <div className="flex flex-col w-full gap-8 print:gap-10">
             {/* Top Copy */}
-            <div className="flex-1 h-[45%]">
-              <ReceiptCopy type="OFFICE COPY" />
-            </div>
+            <ReceiptCopy type="OFFICE COPY" />
 
             {/* Horizontal centered cut line */}
-            <div className="flex flex-row items-center justify-center w-full relative h-4">
-               <div className="absolute inset-x-0 border-t-[1px] border-dashed border-slate-400"></div>
+            <div className="flex flex-row items-center justify-center w-full relative py-2">
+               <div className="absolute inset-x-0 border-t-[1.5px] border-dashed border-slate-400"></div>
                <div className="bg-white px-6 z-10 flex flex-row items-center gap-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">CUT ALONG THIS LINE</span>
-                  <span className="text-lg">✂</span>
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.6em]">CUT ALONG THIS LINE</span>
+                  <span className="text-xl text-slate-400">✂</span>
                </div>
             </div>
 
             {/* Bottom Copy */}
-            <div className="flex-1 h-[45%]">
-              <ReceiptCopy type="STUDENT COPY" />
-            </div>
+            <ReceiptCopy type="STUDENT COPY" />
           </div>
 
         </div>
       </div>
-      <style>{`
-        .vertical-text {
-          writing-mode: vertical-rl;
-          text-orientation: mixed;
-        }
-      `}</style>
     </div>
   );
 }
