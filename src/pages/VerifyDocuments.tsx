@@ -221,65 +221,112 @@ export default function VerifyDocuments() {
       {/* Receipt Preview Sidebar */}
       <div className="flex flex-col gap-3">
         <div className="text-xs font-bold mb-2 uppercase tracking-widest text-slate-500">Live Receipt Preview</div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
-                   <div className="border-[1.5px] border-black p-1.5 rounded-sm bg-white text-[7px] leading-[1.2] font-sans text-black">
-              <div className="flex flex-col pb-1 mb-1 border-b-[1px] border-black text-left pl-[28px] relative">
-                <div className="w-[20px] h-[20px] absolute left-0 top-0 mix-blend-multiply opacity-50 bg-slate-200"></div> {/* Dummy logo */}
-                <div className="text-[9px] font-black uppercase leading-none text-black">MALLA REDDY (MR)</div>
-                <div className="text-[4.5px] font-bold mt-0.5 uppercase tracking-tighter text-black">UGC Autonomous Institution, NBA & NAAC "A" Grade</div>
-                <div className="text-[4.5px] font-bold uppercase text-black">Approved by AICTE, New Delhi, Affiliated to JNTUH</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3 items-center">
+             
+           {/* Preview bounding box wrapping precisely the receipt element */}
+           <div className="w-[180px] origin-top opacity-90 scale-[0.98] transition-transform">
+              {/* Outer Labels */}
+              <div className="font-black text-[7px] tracking-wide uppercase mb-1 text-left text-slate-800">
+                 OFFICE / STUDENT COPY
               </div>
-              
-              <div className="flex justify-center mb-1">
-                <span className="text-[7.5px] font-black uppercase tracking-widest text-black">DOCUMENTS RECEIPT</span>
-              </div>
-  
-              <div className="grid grid-cols-[60px_1fr] gap-y-0.2 text-[6px] font-semibold text-black px-1 mb-1">
-                <span className="font-bold">Enq.No</span><span>: <span className="uppercase font-semibold">{currentStudent.admissionNo}</span></span>
-                <span className="font-bold">Name</span><span>: <span className="uppercase font-semibold">{currentStudent.name}</span></span>
-                <span className="font-bold">Father's Name</span><span>: <span className="uppercase font-semibold">{currentStudent.fatherName}</span></span>
-                <span className="font-bold">Year</span><span>: <span className="uppercase font-semibold">{currentStudent.academicYear}</span></span>
-                <span className="font-bold">Course Name</span><span>: <span className="uppercase font-semibold">{currentStudent.branch} ({currentStudent.program})</span></span>
-              </div>
-  
-              <div className="px-1 mb-2">
-                 <div className="grid grid-cols-1 gap-y-[1px]">
-                   {checklistItems.map((item) => {
-                     const isGiven = docs[item.key as keyof typeof docs];
-                     return (
-                       <div key={item.key} className="flex items-center gap-[3px] leading-none">
-                         <div className="w-[6px] h-[6px] border-[0.75px] border-black flex items-center justify-center shrink-0 bg-white">
-                           {isGiven && <span className="text-[5px] font-black text-black">✓</span>}
-                         </div>
-                         <span className="text-[5px] font-semibold text-black">{item.label}</span>
-                       </div>
-                     );
+
+              {/* Main Container */}
+              <div className="border-[1px] border-black p-2 flex flex-col bg-white">
+                
+                {/* HEADER */}
+                <div className="flex flex-col items-center text-center pb-1">
+                   <img 
+                      src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
+                      alt="MRDU" 
+                      className="h-6 w-6 object-contain mb-0.5" 
+                      referrerPolicy="no-referrer"
+                   />
+                   <h1 className="text-[10px] font-black uppercase tracking-tight leading-none mb-0.5">MALLA REDDY (MR)</h1>
+                   <p className="font-bold text-[5px] uppercase tracking-wide mb-0.5">(DEEMED TO BE UNIVERSITY)</p>
+                   <p className="font-bold text-[4px] tracking-wide">Recognised Under Section 3 of The UGC Act, 1956.</p>
+                </div>
+
+                <div className="border-t-[0.5px] border-black mt-0.5 mb-[1px]"></div>
+                <div className="text-center font-bold text-[4px]">
+                   Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana. | www.mrdu.edu.in
+                </div>
+                <div className="border-t-[0.5px] border-black mt-[1px] mb-2"></div>
+
+                <div className="text-center font-bold text-[7px] uppercase underline underline-offset-1 mb-3 tracking-wide">
+                   ADMISSIONS CERTIFICATION
+                </div>
+
+                <div className="flex flex-col gap-[2px] mb-3 px-1">
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Enq.No</span>
+                      <span className="font-bold">: {currentStudent.admissionNo}</span>
+                   </div>
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Student Name</span>
+                      <span className="font-bold uppercase">: {currentStudent.name}</span>
+                   </div>
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Fathers' Name</span>
+                      <span className="font-bold uppercase">: {currentStudent.fatherName}</span>
+                   </div>
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Academic Year</span>
+                      <span className="font-bold uppercase">: {currentStudent.academicYear}</span>
+                   </div>
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Program</span>
+                      <span className="font-bold uppercase">: {currentStudent.program}</span>
+                   </div>
+                   <div className="grid grid-cols-[60px_1fr] items-center text-[5px]">
+                      <span className="font-bold">Course Name</span>
+                      <span className="font-bold uppercase">: {currentStudent.branch}</span>
+                   </div>
+                </div>
+
+                <div className="font-bold text-[5px] uppercase underline underline-offset-1 mb-2 px-1 tracking-wide">
+                   DOCUMENTS CHECKLIST:
+                </div>
+
+                <div className="flex flex-col gap-[2px] mb-8 px-1">
+                   {checklistItems.map(item => {
+                      const isGiven = !!docs[item.key as keyof typeof docs];
+                      return (
+                        <div key={item.key} className="flex items-center gap-1">
+                           <div className="w-[6px] h-[6px] border-[0.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                             {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[4px] h-[4px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                           </div>
+                           <span className="font-bold text-black uppercase text-[4.5px] truncate">{item.label}</span>
+                        </div>
+                      );
                    })}
+                   
                    {docs.others && (
-                     <div className="flex items-center gap-[3px] leading-none pt-0.5 mt-0.5">
-                       <div className="w-[6px] h-[6px] border-[0.75px] border-black flex items-center justify-center shrink-0 bg-white">
-                         <span className="text-[5px] font-black text-black">✓</span>
-                       </div>
-                       <span className="text-[5px] font-semibold text-black uppercase truncate">{docs.others}</span>
-                     </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                         <div className="w-[6px] h-[6px] border-[0.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[4px] h-[4px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                         </div>
+                         <span className="font-bold text-black uppercase text-[4.5px] truncate">{docs.others}</span>
+                      </div>
                    )}
-                 </div>
+                </div>
+
+                <div className="flex justify-end mb-2 px-1">
+                   <div className="flex flex-col items-center">
+                      <div className="w-16 border-b-[0.5px] border-black mb-0.5"></div>
+                      <span className="font-bold text-[4.5px] uppercase tracking-wide">Authorized Signature</span>
+                   </div>
+                </div>
+
+                <div className="border-[0.5px] border-black px-1.5 py-1">
+                   <p className="font-bold text-[4px] leading-[1.3] text-left">
+                      <span className="font-black">Note: </span>
+                      Parents are requested to preserve this receipt for future clarifications in
+                      respect of fee paid by you. Fee once paid will not be refunded or transferred.
+                   </p>
+                </div>
+
               </div>
-  
-              <div className="mt-1 flex justify-end pr-1 mb-1">
-                 <div className="text-center">
-                    <div className="w-10 border-b-[0.75px] border-black mb-[1px]"></div>
-                    <p className="text-[5px] text-black font-bold">Admin</p>
-                 </div>
-              </div>
- 
-              <div className="border-t-[1.5px] border-black mt-[1px] pt-1 px-1">
-                 <p className="text-[5px] text-black leading-[1.3] text-justify font-semibold">
-                   <span className="font-bold">Note: </span>
-                   Parents are requested to preserve this receipt for future clarifications...
-                 </p>
-              </div>
-            </div>
+           </div>
         </div>
         
         <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 mt-2 shadow-sm">

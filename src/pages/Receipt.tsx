@@ -82,114 +82,114 @@ export default function Receipt() {
     { key: 'others', label: 'Other Documents' },
   ];
 
-  const ReceiptCopy = ({ type }: { type: 'OFFICE COPY' | 'STUDENT COPY' }) => {
+  const ReceiptCopy = ({ type, isRight = false }: { type: 'OFFICE COPY' | 'STUDENT COPY', isRight?: boolean }) => {
     const checklistItems = getChecklistItems(currentStudent.program);
 
     return (
-    <div className="flex flex-col text-black w-full border-[1.5px] border-black bg-[#fdfdf0] print:bg-white text-[10px] leading-tight font-sans relative pb-1">
+    <div className="flex flex-col text-black w-full bg-white font-sans relative h-fit print:h-fit">
       
-      {/* Ghost text for "MREC" style watermarking/text if needed? Left empty. Using standard box. */}
-      
-      {/* HEADER ROW */}
-      <div className="flex items-center justify-between p-2 pb-1 border-b-[1.5px] border-black">
-         <div className="flex items-center gap-3">
-            <img 
-               src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
-               alt="MRDU" 
-               className="h-14 w-14 object-contain mix-blend-multiply" 
-               referrerPolicy="no-referrer"
-            />
-            <div className="flex flex-col pt-1">
-               <h1 className="text-[17px] font-black uppercase tracking-tight leading-none mb-0.5">MALLA REDDY (MR)</h1>
-               <p className="font-bold text-[8.5px] uppercase">(UGC Autonomous Institution, NBA & NAAC "A" Grade)</p>
-               <p className="font-bold text-[8.5px]">(Approved by AICTE, New Delhi, Affiliated to JNTUH, Hyderabad)</p>
-               <p className="font-bold text-[8.5px]">Maisammaguda, Dhulapally (Post), Kompally, Secunderabad - 500100</p>
-               <p className="font-bold text-[8.5px]">www.mrec.ac.in, Phone No: 9348161303</p>
-            </div>
-         </div>
+      {/* Outer Labels */}
+      <div className={`font-black text-[10px] tracking-wide uppercase mb-1.5 ${isRight ? 'text-right' : 'text-left'}`}>
+         {type}
       </div>
 
-      <div className="text-center font-bold text-[14px] uppercase tracking-wide py-2 pb-1.5 border-b-[1px] border-transparent">
-         DOCUMENTS RECEIPT
-      </div>
+      {/* Main Container */}
+      <div className="border-[1.5px] border-black p-3 sm:p-4 flex flex-col bg-white">
+        
+        {/* HEADER */}
+        <div className="flex flex-col items-center text-center pb-1">
+           <img 
+              src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
+              alt="MRDU" 
+              className="h-10 w-10 object-contain mb-1" 
+              referrerPolicy="no-referrer"
+           />
+           <h1 className="text-[14px] font-black uppercase tracking-tight leading-none mb-0.5">MALLA REDDY (MR)</h1>
+           <p className="font-bold text-[8px] uppercase tracking-wide mb-0.5">(DEEMED TO BE UNIVERSITY)</p>
+           <p className="font-bold text-[6px] tracking-wide">Recognised Under Section 3 of The UGC Act, 1956.</p>
+        </div>
 
-      <div className="flex flex-col px-3 mb-2 gap-[2px]">
-         
-         <div className="grid grid-cols-[140px_1fr] items-center">
-            <span className="font-bold">Enq.No</span>
-            <span className="font-semibold">: <span className="uppercase ml-1">{currentStudent.admissionNo}</span></span>
-         </div>
+        <div className="border-t-[1px] border-black mt-1 mb-[2px]"></div>
+        <div className="text-center font-bold text-[5.5px]">
+           Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
+        </div>
+        <div className="border-t-[1px] border-black mt-[2px] mb-4"></div>
 
-         <div className="grid grid-cols-[140px_1fr] items-center">
-            <span className="font-bold">Name of the student</span>
-            <span className="font-semibold">: <span className="uppercase ml-1">{currentStudent.name}</span></span>
-         </div>
+        <div className="text-center font-bold text-[10px] uppercase underline underline-offset-2 mb-5 tracking-wide">
+           ADMISSIONS CERTIFICATION
+        </div>
 
-         <div className="grid grid-cols-[140px_1fr] items-center">
-            <span className="font-bold">Fathers' Name</span>
-            <span className="font-semibold">: <span className="uppercase ml-1">{currentStudent.fatherName}</span></span>
-         </div>
+        <div className="flex flex-col gap-[3px] mb-5 px-1">
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Enq.No</span>
+              <span className="font-bold">: {currentStudent.admissionNo}</span>
+           </div>
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Name of the student</span>
+              <span className="font-bold uppercase">: {currentStudent.name}</span>
+           </div>
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Fathers' Name</span>
+              <span className="font-bold uppercase">: {currentStudent.fatherName}</span>
+           </div>
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Academic Year</span>
+              <span className="font-bold uppercase">: {currentStudent.academicYear}</span>
+           </div>
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Program</span>
+              <span className="font-bold uppercase">: {currentStudent.program}</span>
+           </div>
+           <div className="grid grid-cols-[100px_1fr] items-center text-[8px]">
+              <span className="font-bold">Course Name</span>
+              <span className="font-bold uppercase">: {currentStudent.branch}</span>
+           </div>
+        </div>
 
-         <div className="grid grid-cols-[140px_1fr] items-center">
-            <span className="font-bold">Academic Year</span>
-            <span className="font-semibold">: <span className="uppercase ml-1">{currentStudent.academicYear}</span></span>
-         </div>
+        <div className="font-bold text-[8px] uppercase underline underline-offset-2 mb-2.5 px-1 tracking-wide">
+           DOCUMENTS CHECKLIST:
+        </div>
 
-         <div className="grid grid-cols-[140px_1fr] items-center">
-            <span className="font-bold">Course Name</span>
-            <span className="font-semibold">: <span className="uppercase ml-1">{currentStudent.branch} ({currentStudent.program})</span></span>
-         </div>
-
-      </div>
-
-      <div className="flex justify-end pr-4 -mt-16 mb-16 opacity-0">.</div> {/* Spacer for symmetry if needed, skip for now */}
-
-      <div className="flex flex-col px-3 gap-[3px] mt-1 mb-4">
-         {checklistItems.map(item => {
-            const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
-            return (
-              <div key={item.key} className="flex items-center gap-1.5">
-                 <div className="w-[10px] h-[10px] border border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                   {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[8px] h-[8px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+        <div className="flex flex-col gap-[2px] mb-12 px-1">
+           {checklistItems.map(item => {
+              const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
+              return (
+                <div key={item.key} className="flex items-center gap-1.5">
+                   <div className="w-[10px] h-[10px] border-[1px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                     {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[6px] h-[6px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                   </div>
+                   <span className="font-bold text-black uppercase text-[7px]">{item.label}</span>
+                </div>
+              );
+           })}
+           
+           {currentStudent.documents.others && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                 <div className="w-[10px] h-[10px] border-[1px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[6px] h-[6px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
                  </div>
-                 <span className="font-semibold text-black">{item.label}</span>
+                 <span className="font-bold text-black uppercase text-[7px]">{currentStudent.documents.others}</span>
               </div>
-            );
-         })}
-         
-         {currentStudent.documents.others && (
-            <div className="flex items-center gap-1.5 mt-0.5">
-               <div className="w-[10px] h-[10px] border border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[8px] h-[8px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
-               </div>
-               <span className="font-semibold text-black uppercase">{currentStudent.documents.others}</span>
-            </div>
-         )}
-      </div>
+           )}
+        </div>
 
-      <div className="flex justify-end pr-6 mb-2 mt-auto">
-         <div className="flex flex-col items-center">
-            {/* Fake cursive signature icon approximation */}
-            <div className="w-12 h-6 border-b border-black flex items-end justify-center mb-0.5 relative">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-black absolute bottom-0 right-0 transform translate-y-1/4 opacity-60"><path d="M5 15l2-2 3.5 3.5 2-8 3 8 2.5-3 2 4M3 21h18"></path></svg>
-            </div>
-            <span className="font-bold text-[10px]">Admin</span>
-         </div>
-      </div>
+        <div className="flex justify-end mb-4 px-2">
+           <div className="flex flex-col items-center">
+              <div className="w-32 border-b-[1px] border-black mb-1"></div>
+              <span className="font-bold text-[7px] uppercase tracking-wide">Authorized Signature</span>
+           </div>
+        </div>
 
-      <div className="mt-1 flex border-t-[1.5px] border-black p-2 mx-0 relative">
-         <p className="font-semibold text-[10px] leading-[1.3] text-justify w-full">
-            <span className="font-bold">Note: </span>
-            Parents are requested to preserve this receipt for future clarifications in
-            respect of fee paid by you. Fee once paid will not be refunded or transferred.
-            Cheques subject to realization.
-         </p>
-         {/* Small watermark text overlay showing COPY type */}
-         <div className="absolute right-2 top-2 font-black text-slate-300 opacity-50 uppercase tracking-widest text-xs pointer-events-none">
-            {type}
-         </div>
-      </div>
+        <div className="border-[1px] border-black px-2 py-1.5 mt-0">
+           <p className="font-bold text-[6px] leading-[1.3] text-left">
+              <span className="font-black">Note: </span>
+              Parents are requested to preserve this receipt for future clarifications in
+              respect of fee paid by you. Fee once paid will not be refunded or transferred.
+              Cheques subject to realization.
+           </p>
+        </div>
 
+      </div>
     </div>
     );
   };
@@ -239,33 +239,38 @@ export default function Receipt() {
 
         <div 
           ref={receiptRef}
-          className="bg-white print:bg-white shadow-2xl mx-auto print:shadow-none w-full print:w-[210mm] min-h-[297mm] flex flex-col items-center justify-start overflow-hidden relative box-border print:border-none p-6 print:p-0 gap-6"
+          className="bg-white print:bg-white shadow-2xl mx-auto print:shadow-none w-[210mm] flex flex-row relative box-border print:border-none p-4"
+          style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
         >
           <style>
             {`
               @media print {
-                @page { size: A4 portrait; margin: 12mm; }
+                @page { size: A4 portrait; margin: 0; }
                 body { 
                   margin: 0;
                   padding: 0;
                   background-color: white !important;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
                 }
               }
             `}
           </style>
 
-          <div className="w-full h-auto">
-            <ReceiptCopy type="OFFICE COPY" />
+          {/* Left Column - OFFICE COPY */}
+          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-fit">
+            <ReceiptCopy type="OFFICE COPY" isRight={false} />
           </div>
 
-          <div className="flex flex-row items-center justify-center w-full relative py-2 print:py-4 opacity-50 space-x-4">
-             <div className="absolute inset-x-0 border-t-[1.5px] border-dashed border-slate-600 print:border-black"></div>
-             <span className="bg-white px-4 z-10 text-[9px] font-black tracking-[0.5em] uppercase border border-slate-300">Cut Here</span>
-             <span className="bg-white px-2 z-10 text-lg">✂</span>
+          {/* Center Cut Line Divides A4 vertically */}
+          <div className="absolute inset-y-8 left-1/2 -ml-[0.5px] border-l-[1px] border-dashed border-slate-400 print:border-black flex flex-col items-center justify-center opacity-50 z-10 w-[1px]">
+             <span className="bg-white py-4 text-[7px] font-bold tracking-[0.5em] uppercase border border-white text-black whitespace-nowrap -ml-[2px]" style={{ writingMode: 'vertical-rl' }}>CUT HERE</span>
+             <span className="bg-white py-2 z-10 text-lg border border-white text-black -ml-[3px]">✂</span>
           </div>
 
-          <div className="w-full h-auto">
-            <ReceiptCopy type="STUDENT COPY" />
+          {/* Right Column - STUDENT COPY */}
+          <div className="flex-1 w-1/2 p-2 print:p-4 flex flex-col h-fit">
+            <ReceiptCopy type="STUDENT COPY" isRight={true} />
           </div>
 
         </div>
