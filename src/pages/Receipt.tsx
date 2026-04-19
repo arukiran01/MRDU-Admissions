@@ -4,6 +4,7 @@ import { useAppContext } from '../store/AppContext';
 import { ArrowLeft, Printer, Download, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getChecklistItems } from '../constants';
 
 export default function Receipt() {
   const { currentStudent, logAction } = useAppContext();
@@ -82,41 +83,40 @@ export default function Receipt() {
   ];
 
   const ReceiptCopy = ({ type }: { type: 'OFFICE COPY' | 'STUDENT COPY' }) => {
-    // Only show ticked documents as per user request: "only selected checkboxes only should print"
-    const tickedDocuments = checklistMap.filter(item => !!currentStudent.documents[item.key as keyof typeof currentStudent.documents]);
+    const checklistItems = getChecklistItems(currentStudent.program);
 
     return (
-    <div className="border-[1.5px] border-slate-900 p-3 h-full flex flex-col bg-white print:bg-white relative">
-      <div className="text-center pb-2 mb-3 print:border-black">
-        <div className="flex justify-center mb-1">
+    <div className="border-[1.5px] border-slate-900 p-2 h-full flex flex-col bg-white print:bg-white relative">
+      <div className="text-center pb-1 mb-2 border-b-[0.5px] border-slate-300 print:border-slate-900">
+        <div className="flex justify-center mb-0.5">
           <img 
             src="https://mrdu.edu.in/wp-content/uploads/2025/08/Logo.png" 
             alt="MRDU Logo" 
-            className="h-12 w-auto" 
+            className="h-9 w-auto" 
             referrerPolicy="no-referrer" 
           />
         </div>
-        <h1 className="text-[18px] font-black uppercase tracking-tight mb-0.5 print:text-black leading-none">MALLA REDDY (MR)</h1>
-        <div className="flex flex-col items-center gap-0.5">
-          <p className="text-[11px] font-black text-slate-800 print:text-black uppercase tracking-normal leading-tight">
+        <h1 className="text-[16px] font-black uppercase tracking-tight mb-0.5 print:text-black leading-none">MALLA REDDY (MR)</h1>
+        <div className="flex flex-col items-center gap-0">
+          <p className="text-[9.5px] font-black text-slate-800 print:text-black uppercase tracking-tighter leading-tight">
             (DEEMED TO BE UNIVERSITY)
           </p>
-          <p className="text-[8px] font-bold text-slate-700 print:text-black leading-tight">
+          <p className="text-[7px] font-bold text-slate-700 print:text-black leading-tight">
             Recognised Under Section 3 of The UGC Act, 1956.
           </p>
         </div>
-        <p className="text-[8px] font-black print:text-black mt-1.5 leading-tight border-t-[1.5px] border-slate-900 pt-1.5 pb-1">
+        <p className="text-[7px] font-black print:text-black mt-1 leading-tight border-t-[1px] border-slate-900 pt-1 pb-0.5">
           Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </p>
       </div>
 
-      <div className="flex justify-center mb-4">
-        <h2 className="text-[14px] font-black underline underline-offset-4 uppercase print:text-black tracking-[0.1em]">
+      <div className="flex justify-center mb-2">
+        <h2 className="text-[12px] font-black underline underline-offset-3 uppercase print:text-black tracking-normal">
           ADMISSIONS CERTIFICATION
         </h2>
       </div>
 
-      <div className="grid grid-cols-[140px_15px_1fr] sm:grid-cols-[180px_15px_1fr] gap-y-1.5 mb-3 text-[12px] font-black print:text-black">
+      <div className="grid grid-cols-[125px_10px_1fr] sm:grid-cols-[150px_10px_1fr] gap-y-0.5 mb-2 text-[10.5px] font-black print:text-black">
         <div>Enq.No</div>
         <div>:</div>
         <div className="uppercase">{currentStudent.admissionNo}</div>
@@ -142,44 +142,51 @@ export default function Receipt() {
         <div className="uppercase">{currentStudent.branch}</div>
       </div>
 
-      <div className="mb-3 print:text-black">
-        <div className="font-black text-[12px] underline mb-2 uppercase tracking-wide">Submitted Documents:</div>
-        {tickedDocuments.length > 0 ? (
-          <div className="grid grid-cols-2 gap-y-1.5 gap-x-4">
-            {tickedDocuments.map((item) => {
-              const displayLabel = item.key === 'others' 
-                ? `Other: ${currentStudent.documents.others}`
-                : item.label;
-              return (
-                <div key={item.key} className="flex items-center space-x-2">
-                  <div className="w-[15px] h-[15px] border-[1.5px] border-slate-900 print:border-black flex items-center justify-center shrink-0 rounded-sm bg-white">
-                    <span className="text-[10px] font-black text-slate-900 print:text-black">✓</span>
-                  </div>
-                  <span className="text-[11px] font-bold leading-none">{displayLabel}</span>
+      <div className="mb-2 print:text-black">
+        <div className="font-black text-[10.5px] underline mb-1 uppercase tracking-tight">Documents Checklist:</div>
+        <div className="grid grid-cols-1 gap-y-0 text-slate-800">
+          {checklistItems.map((item) => {
+            const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
+            return (
+              <div key={item.key} className="flex items-center space-x-1.5 py-0">
+                <div className="w-[10.5px] h-[10.5px] border-[1px] border-slate-900 print:border-black flex items-center justify-center shrink-0 rounded-sm bg-white">
+                  {isGiven && (
+                    <span className="text-[8.5px] font-black text-slate-900 print:text-black">✓</span>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-slate-400 italic text-[11px]">No original documents recorded.</div>
-        )}
-      </div>
-
-      <div className="flex-1"></div>
-
-      {/* Signature block */}
-      <div className="flex justify-end mb-2 relative mt-auto pt-2">
-        <div className="text-center min-w-[160px]">
-          <div className="border-t-[1.5px] border-slate-900 print:border-black w-full mb-1"></div>
-          <p className="font-black text-[10px] tracking-wide uppercase print:text-black">Authorized Signature</p>
+                <span className="text-[9px] font-bold leading-none uppercase">
+                  {item.label}
+                </span>
+              </div>
+            );
+          })}
+          {currentStudent.documents.others && (
+            <div className="flex items-center space-x-1.5 py-0">
+              <div className="w-[10.5px] h-[10.5px] border-[1px] border-slate-900 print:border-black flex items-center justify-center shrink-0 rounded-sm bg-white">
+                <span className="text-[8.5px] font-black text-slate-900 print:text-black">✓</span>
+              </div>
+              <span className="text-[9px] font-bold leading-none uppercase">
+                {currentStudent.documents.others}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Note Box */}
-      <div className="border-[1.5px] border-slate-900 p-2 text-[9px] font-bold leading-relaxed print:border-black print:text-black">
-        <p><span className="font-black">Note:</span> Parents are requested to preserve this receipt for future clarifications in
-        respect of fee paid by you. Fee once paid will not be refunded or transferred.
-        Cheques subject to realization.</p>
+      {/* Signature & Note tightly packed at bottom */}
+      <div className="mt-auto">
+        <div className="flex justify-end mb-2.5">
+          <div className="text-center min-w-[140px]">
+            <div className="border-t-[1px] border-slate-900 print:border-black w-full mb-0.5"></div>
+            <p className="font-black text-[8.5px] tracking-tight uppercase print:text-black">Authorized Signature</p>
+          </div>
+        </div>
+
+        <div className="border-[1.2px] border-slate-900 p-1.5 text-[8.2px] font-bold leading-tight print:border-black print:text-black">
+          <p><span className="font-black">Note:</span> Parents are requested to preserve this receipt for future clarifications in
+          respect of fee paid by you. Fee once paid will not be refunded or transferred.
+          Cheques subject to realization.</p>
+        </div>
       </div>
     </div>
   );

@@ -8,15 +8,19 @@ export interface Student {
   parentPhone: string;
   interHallTicket: string;
   documents: {
-    ssc: boolean;
-    schoolBonafide: boolean;
-    interBonafide: boolean;
+    sscMemo: boolean;
+    sscBonafide: boolean;
+    schoolBonafide6to9: boolean;
+    tc: boolean;
     interPC: boolean;
+    interBonafide: boolean;
+    aadhaar: boolean;
     degreeCMM: boolean;
     degreePC: boolean;
-    tc: boolean;
-    aadhaar: boolean;
-    rankCard: boolean;
+    degreeBonafide: boolean;
+    pgCMM: boolean;
+    pgPC: boolean;
+    pgBonafide: boolean;
     others: string;
   };
   status: 'Pending' | 'Verified';

@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Student } from '../types';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
+import { getChecklistItems } from '../constants';
 
 export default function Dashboard() {
   const { students, setCurrentStudent, updateStudent, deleteStudent, isLoading } = useAppContext();
@@ -83,17 +84,10 @@ export default function Dashboard() {
         'Parent Phone': s.parentPhone,
         'Academic Year': s.academicYear,
         'Status': s.status,
-        'Docs Verified': [
-          docs.ssc && 'SSC',
-          docs.schoolBonafide && 'School Bonafide',
-          docs.interBonafide && 'Inter Bonafide',
-          docs.tc && 'TC',
-          docs.interPC && 'Inter PC',
-          docs.degreeCMM && 'Degree CMM',
-          docs.degreePC && 'Degree PC',
-          docs.aadhaar && 'Aadhaar',
-          docs.rankCard && 'Rank Card',
-        ].filter(Boolean).join(', '),
+        'Docs Checklist': getChecklistItems(s.program).map(item => {
+          const isGiven = !!s.documents[item.key as keyof typeof s.documents];
+          return `${item.label}: ${isGiven ? 'GIVEN' : 'NOT GIVEN'}`;
+        }).join(' | ') + (s.documents.others ? ` | OTHER: ${s.documents.others} (GIVEN)` : ''),
         'Registration Date': new Date(s.createdAt).toLocaleDateString()
       };
     });
@@ -212,18 +206,18 @@ export default function Dashboard() {
             <select 
               value={branchFilter}
               onChange={(e) => setBranchFilter(e.target.value)}
-              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
+              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none font-medium text-slate-700"
             >
-              <option value="">All Branches</option>
+              <option value="">Search Branch</option>
               {branches.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
 
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
+              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none font-medium text-slate-700"
             >
-              <option value="">All Statuses</option>
+              <option value="">Search Status</option>
               <option value="Verified">Verified</option>
               <option value="Pending">Pending</option>
             </select>
@@ -231,9 +225,9 @@ export default function Dashboard() {
             <select 
               value={programFilter}
               onChange={(e) => setProgramFilter(e.target.value)}
-              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
+              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none font-medium text-slate-700"
             >
-              <option value="">All Programs</option>
+              <option value="">By Program</option>
               <option value="UG">UG</option>
               <option value="PG">PG</option>
               <option value="PHD">PHD</option>
@@ -242,11 +236,25 @@ export default function Dashboard() {
             <select 
               value={yearFilter}
               onChange={(e) => setYearFilter(e.target.value)}
-              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none"
+              className="text-[13px] border border-slate-200 bg-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 outline-none font-medium text-slate-700"
             >
-              <option value="">All Years</option>
+              <option value="">By Year</option>
               {academicYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
+            
+            {(branchFilter || statusFilter || programFilter || yearFilter) && (
+              <button 
+                onClick={() => {
+                  setBranchFilter('');
+                  setStatusFilter('');
+                  setProgramFilter('');
+                  setYearFilter('');
+                }}
+                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-tight flex items-center"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </div>
       <div className="overflow-x-auto">

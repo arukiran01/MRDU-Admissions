@@ -4,6 +4,7 @@ import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, Users } from 'lucide-react';
+import { getChecklistItems } from '../constants';
 
 export default function VerifyDocuments() {
   const { currentStudent, updateStudent, students, setCurrentStudent, isLoading } = useAppContext();
@@ -84,17 +85,7 @@ export default function VerifyDocuments() {
     setDocs(currentStudent.documents);
   }, [currentStudent?.id]); // Use id to avoid infinite loop
 
-  const checklistItems: { key: DocumentKey; label: string }[] = [
-    { key: 'ssc', label: '10th Class Memo (SSC)' },
-    { key: 'schoolBonafide', label: '10th Class Bonafide' },
-    { key: 'tc', label: 'Transfer Certificate (TC)' },
-    { key: 'interBonafide', label: 'Inter/Diploma Bonafide' },
-    { key: 'interPC', label: 'Inter/Diploma PC' },
-    { key: 'degreeCMM', label: 'Degree/B.Tech CMM' },
-    { key: 'degreePC', label: 'Degree/B.Tech PC' },
-    { key: 'aadhaar', label: 'Aadhaar Card' },
-    { key: 'rankCard', label: 'Rank Card (JEE/MAINS/CET)' },
-  ];
+  const checklistItems = getChecklistItems(currentStudent.program);
 
   const handleToggle = (key: DocumentKey) => {
     setDocs((prev) => ({
@@ -232,18 +223,18 @@ export default function VerifyDocuments() {
         <div className="text-xs font-bold mb-2 uppercase tracking-widest text-slate-500">Live Receipt Preview</div>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
           
-            <div className="border-[1.5px] border-slate-900 p-2 rounded bg-white text-[7px] leading-[1.2] font-black print:text-black">
-              <div className="text-center pb-1 mb-1 border-b border-slate-200">
+            <div className="border-[1.5px] border-slate-900 p-1.5 rounded bg-white text-[7px] leading-[1.2] font-black print:text-black">
+              <div className="text-center pb-1 mb-1 border-b-[0.5px] border-slate-200">
                 <div className="text-[10px] font-black uppercase leading-none">MALLA REDDY (MR)</div>
-                <div className="text-[6.5px] font-black text-slate-800 mt-0.5">(DEEMED TO BE UNIVERSITY)</div>
-                <div className="text-[5px] font-bold text-slate-500 mt-0.5 leading-tight">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
+                <div className="text-[6.3px] font-black text-slate-800 mt-0.5 uppercase tracking-tighter">(DEEMED TO BE UNIVERSITY)</div>
+                <div className="text-[4.8px] font-bold text-slate-500 mt-0.25 leading-tight">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
               </div>
               
               <div className="flex justify-center mb-1">
-                <span className="text-[8px] underline font-black uppercase tracking-wider">ADMISSIONS CERTIFICATION</span>
+                <span className="text-[7.5px] underline underline-offset-1 font-black uppercase tracking-tight">ADMISSIONS CERTIFICATION</span>
               </div>
   
-              <div className="grid grid-cols-[60px_5px_1fr] gap-y-0.5 text-[7px] font-black">
+              <div className="grid grid-cols-[60px_5px_1fr] gap-y-0.2 text-[6.8px] font-black">
                 <span>Enq.No</span><span>:</span><span className="uppercase">{currentStudent.admissionNo}</span>
                 <span>Name</span><span>:</span><span className="uppercase">{currentStudent.name}</span>
                 <span>Father's Name</span><span>:</span><span className="uppercase">{currentStudent.fatherName}</span>
@@ -252,24 +243,35 @@ export default function VerifyDocuments() {
                 <span>Course</span><span>:</span><span className="uppercase">{currentStudent.branch}</span>
               </div>
   
-              <div className="mt-2 pt-1 border-t border-slate-100">
-                 <p className="text-[6px] font-black underline mb-0.5 uppercase">Documents Submitted:</p>
-                 <div className="flex flex-wrap gap-1">
-                   {Object.entries(docs).map(([key, value]) => {
-                     if (value === true && key !== 'others') {
-                       const label = checklistItems.find(i => i.key === key)?.label || key;
-                       return <span key={key} className="bg-slate-50 px-0.5 rounded-[1px] text-[5px] uppercase border-[0.5px] border-slate-200 shrink-0">✓ {label}</span>;
-                     }
-                     if (key === 'others' && typeof value === 'string' && value.trim() !== '') {
-                       return <span key="others-val" className="bg-slate-50 px-0.5 rounded-[1px] text-[5px] uppercase border-[0.5px] border-slate-200 shrink-0">✓ Other: {value}</span>;
-                     }
-                     return null;
+              <div className="mt-1 pb-1 border-t-[0.5px] border-slate-100">
+                 <p className="text-[5.8px] font-black border-b-[0.5px] border-slate-100 mb-0.5 pb-0.2 uppercase tracking-tighter">Documents Checklist:</p>
+                 <div className="grid grid-cols-1 gap-y-0 overflow-hidden">
+                   {checklistItems.map((item) => {
+                     const isGiven = docs[item.key as keyof typeof docs];
+                     return (
+                       <div key={item.key} className="flex items-center gap-1 leading-none">
+                         <div className="w-[5px] h-[5px] border-[0.5px] border-slate-900 flex items-center justify-center shrink-0 rounded-[0.5px] bg-white">
+                           {isGiven && <span className="text-[4px] font-black">✓</span>}
+                         </div>
+                         <span className="text-[4px] font-bold uppercase truncate">{item.label}</span>
+                       </div>
+                     );
                    })}
+                   {docs.others && (
+                     <div className="flex items-center gap-1 leading-none">
+                       <div className="w-[5px] h-[5px] border-[0.5px] border-slate-900 flex items-center justify-center shrink-0 rounded-[0.5px] bg-white">
+                         <span className="text-[4px] font-black">✓</span>
+                       </div>
+                       <span className="text-[4px] font-bold uppercase truncate">{docs.others}</span>
+                     </div>
+                   )}
                  </div>
               </div>
   
-              <div className="mt-3 pt-1 border-t border-slate-200 text-right">
-                <p className="text-[6px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
+              <div className="mt-2.5 flex justify-end">
+                <div className="text-right border-t-[0.5px] border-slate-200 pt-0.5">
+                  <p className="text-[5px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
+                </div>
               </div>
 
               <div className="mt-1.5 border border-slate-900 p-1 text-[5px] leading-tight font-bold bg-slate-50/30">

@@ -55,7 +55,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .select('*')
         .order('createdAt', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Select Error Details:", {
+          message: error.message,
+          code: error.code,
+          hint: error.hint
+        });
+        throw error;
+      }
       
       const data = (rawData || []).map((s: any) => ({
         ...s,
@@ -70,7 +77,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       setDbStatus('connected');
     } catch (error: any) {
-      console.error("Fetch Error:", error.message);
+      console.error("fetchStudents: Network or Supabase error occurred:", error.message);
+      // Logic for generic "Failed to fetch" which usually means network/CORS/Blocked
+      if (error.message?.includes('fetch')) {
+        console.warn("Hint: 'Failed to fetch' usually indicates the Supabase URL is unreachable or blocked.");
+      }
       setDbStatus('error');
     } finally {
       setIsLoading(false);
@@ -135,13 +146,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Google Sheets Webhook Sync (optional client-side)
+      // We use mode: 'no-cors' for fire-and-forget to avoid "Failed to fetch" on redirect/CORS
       const sheetsWebhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
       if (sheetsWebhookUrl) {
         fetch(sheetsWebhookUrl, {
           method: 'POST',
+          mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(student)
-        }).catch(err => console.error("Sheets sync failed:", err));
+        }).catch(err => console.error("Sheets sync failed (non-blocking):", err));
       }
 
       await fetchStudents();
