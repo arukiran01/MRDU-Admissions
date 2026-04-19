@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { Student } from '../types';
 import { motion } from 'motion/react';
+import { AlertTriangle } from 'lucide-react';
 
 export default function AddStudent() {
-  const { addStudent } = useAppContext();
+  const { addStudent, dbStatus } = useAppContext();
   const navigate = useNavigate();
 
   const generateHallTicket = () => {
@@ -78,6 +79,23 @@ export default function AddStudent() {
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-bold text-slate-800">Register New Student</h2>
       </div>
+
+      {(dbStatus === 'memory' || dbStatus === 'error') && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl flex items-start gap-3 shadow-sm mb-4"
+        >
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold">Local Memory Mode Active</p>
+            <p className="text-xs font-medium opacity-80 leading-relaxed mt-0.5">
+              The backend is not connected to a persistent Supabase database. 
+              Any students you register now will be <strong>lost</strong> if the server restarts or if you refresh the page.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">

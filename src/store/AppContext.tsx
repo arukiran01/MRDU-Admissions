@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Client for Frontend (Real-time)
 const MANUAL_SUPABASE_URL = "https://laaholzwfjahuugaqzfh.supabase.co";
-const MANUAL_SUPABASE_KEY = "sb_publishable_jyfddtLDeyAYEM15IxqjEg_pku83Toq";
+const MANUAL_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhYWhvbHp3ZmphaHV1Z2FxemZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0OTgyNjAsImV4cCI6MjA5MjA3NDI2MH0._qdq6eFs1pnYUQ5mCMqbVbIql7IX60Qsax8Te5W6JC8";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || MANUAL_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || MANUAL_SUPABASE_KEY;
@@ -36,9 +36,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const response = await fetch('/api/health');
       if (response.ok) {
         const data = await response.json();
-        if (data.database === 'connected-as-anon' || data.database === 'connected-as-service-role') {
+        // Be very strict: only mark connected if it's NOT disconnected
+        if (data.database === 'disconnected' || data.database === 'memory-fallback') {
+          setDbStatus('memory');
+        } else if (data.database === 'connected-as-anon' || data.database === 'connected-as-service-role') {
           setDbStatus('connected');
-        } else if (data.database === 'memory-fallback' || data.database === 'disconnected') {
+        } else {
           setDbStatus('memory');
         }
       } else {
@@ -56,14 +59,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setStudents((prev) => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
-        
-        if (currentStudent) {
-          const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
-          if (freshCurrent && JSON.stringify(freshCurrent) !== JSON.stringify(currentStudent)) {
-            setCurrentStudent(freshCurrent);
+        try {
+          const data = await response.json();
+          setStudents((prev) => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
+          
+          if (currentStudent) {
+            const freshCurrent = data.find((s: Student) => s.id === currentStudent.id);
+            if (freshCurrent && JSON.stringify(freshCurrent) !== JSON.stringify(currentStudent)) {
+              setCurrentStudent(freshCurrent);
+            }
           }
+        } catch (parseError) {
+          const text = await response.text();
+          console.error("Fetch Students JSON Parse Error:", parseError, "Response Text:", text.substring(0, 100));
         }
       }
     } catch (error) {
@@ -112,13 +120,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Database insertion failed");
+        const text = await response.text();
+        let errorMessage = "Database insertion failed";
+        try {
+          const data = JSON.parse(text);
+          errorMessage = data.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server Error (${response.status}): ${text.substring(0, 100)}...`;
+        }
+        throw new Error(errorMessage);
       }
       await fetchStudents();
     } catch (e: any) {
       console.error("Failed adding to backend:", e);
-      alert(`Backend Error: ${e.message}`);
+      alert(`Sync Error: ${e.message}`);
       await fetchStudents();
     }
   };
@@ -138,13 +153,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (!response.ok) {
-        const resData = await response.json();
-        throw new Error(resData.error || "Update failed");
+        const text = await response.text();
+        let errorMessage = "Update failed";
+        try {
+          const resData = JSON.parse(text);
+          errorMessage = resData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server Error (${response.status}): ${text.substring(0, 100)}...`;
+        }
+        throw new Error(errorMessage);
       }
       await fetchStudents();
     } catch (e: any) {
       console.error("Failed updating backend:", e);
-      alert(`Backend Error: ${e.message}`);
+      alert(`Sync Error: ${e.message}`);
       setStudents(previousStudents);
     }
   };
@@ -190,7 +212,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchStudents,
         currentStudent,
         setCurrentStudent,
-        isLoading
+        isLoading,
+        dbStatus
       }}
     >
       {children}

@@ -11,7 +11,7 @@ app.use(express.json());
 
 // === SUPABASE (AND DATABASE) SETUP ===
 const MANUAL_SUPABASE_URL = "https://laaholzwfjahuugaqzfh.supabase.co";
-const MANUAL_SUPABASE_KEY = "sb_publishable_jyfddtLDeyAYEM15IxqjEg_pku83Toq";
+const MANUAL_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhYWhvbHp3ZmphaHV1Z2FxemZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0OTgyNjAsImV4cCI6MjA5MjA3NDI2MH0._qdq6eFs1pnYUQ5mCMqbVbIql7IX60Qsax8Te5W6JC8";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || MANUAL_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || MANUAL_SUPABASE_KEY;
@@ -20,6 +20,13 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || MANUA
 const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) 
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
   : null;
+
+console.log(`Backend: Supabase client initialized with URL: ${SUPABASE_URL?.substring(0, 15)}...`);
+if (SUPABASE_SERVICE_ROLE_KEY === MANUAL_SUPABASE_KEY) {
+  console.warn("Backend: WARNING - Using hardcoded FALLBACK Supabase key. This may lead to permission issues if RLS is strict.");
+} else {
+  console.log("Backend: Using CUSTOM Supabase Service Role Key from environment.");
+}
 
 // Validate table existence on startup
 if (supabase) {
@@ -35,14 +42,35 @@ if (supabase) {
 
 let fallbackMemoryStudents: any[] = [];
 
+// --- GLOBAL MIDDLEWARE ---
+app.use((req, res, next) => {
+  // Ensure we don't return HTML for API routes if something fails early
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Content-Type', 'application/json');
+  }
+  next();
+});
+
 // --- API ROUTES ---
+const apiRouter = express.Router();
+
+// Middleware to log all API requests
+apiRouter.use((req, res, next) => {
+  console.log(`API Request: ${req.method} ${req.path}`);
+  next();
+});
 
 // 0. Health check / Heartbeat
-app.get('/api/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
+  const isAnon = (SUPABASE_SERVICE_ROLE_KEY || "").includes('anon') || (SUPABASE_SERVICE_ROLE_KEY || "").includes('publishable');
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    database: supabase ? (SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable') ? 'connected-as-anon' : 'connected-as-service-role') : 'disconnected',
+    database: supabase ? (isAnon ? 'connected-as-anon' : 'connected-as-service-role') : 'disconnected',
+    env: {
+      isVercel: !!process.env.VERCEL,
+      nodeEnv: process.env.NODE_ENV
+    },
     config: {
       hasUrl: !!SUPABASE_URL,
       hasKey: !!SUPABASE_SERVICE_ROLE_KEY
@@ -51,7 +79,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // 1. Fetch All Students
-app.get('/api/students', async (req, res) => {
+apiRouter.get('/students', async (req, res) => {
   try {
     if (supabase) {
       console.log("Supabase: Fetching all students...");
@@ -75,7 +103,7 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
-app.post('/api/students', async (req, res) => {
+apiRouter.post('/students', async (req, res) => {
   const student = req.body;
   console.log("Supabase: Attempting to insert student:", student.name);
   try {
@@ -105,7 +133,7 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-app.put('/api/students/:id', async (req, res) => {
+apiRouter.put('/students/:id', async (req, res) => {
   const { id } = req.params;
   const { id: _id, ...updates } = req.body;
   console.log(`Supabase: Attempting to update student ID ${id} with status: ${updates.status}`);
@@ -128,7 +156,7 @@ app.put('/api/students/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/students/:id', async (req, res) => {
+apiRouter.delete('/students/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (supabase) {
@@ -142,6 +170,28 @@ app.delete('/api/students/:id', async (req, res) => {
     console.error("Delete Student Error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Catch-all for API routes that don't match
+apiRouter.all('*', (req, res) => {
+  res.status(404).json({ error: `API route ${req.method} ${req.path} not found` });
+});
+
+// Mount the API router
+app.use('/api', apiRouter);
+
+// --- GLOBAL ERROR HANDLER ---
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("UNHANDLED ERROR:", err);
+  const status = err.status || 500;
+  // If it's an API route, always return JSON
+  if (req.path.startsWith('/api/')) {
+    return res.status(status).json({ 
+      error: err.message || "Internal Server Error",
+      path: req.path
+    });
+  }
+  next(err);
 });
 
 // === VITE FRONTEND MIDDLEWARE ===
@@ -161,12 +211,14 @@ async function setupFrontend() {
   }
 }
 
-if (!process.env.VERCEL) {
-  setupFrontend().then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
+// Start server
+setupFrontend().then(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend: Server successfully started on http://localhost:${PORT}`);
+    console.log(`Backend: Health Check available at http://localhost:${PORT}/api/health`);
   });
-}
+}).catch(err => {
+  console.error("Backend: Failed to start server:", err);
+});
 
 export default app;
