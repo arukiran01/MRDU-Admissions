@@ -222,60 +222,62 @@ export default function VerifyDocuments() {
       <div className="flex flex-col gap-3">
         <div className="text-xs font-bold mb-2 uppercase tracking-widest text-slate-500">Live Receipt Preview</div>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
-          
-            <div className="border-[1.5px] border-slate-900 p-1.5 rounded bg-white text-[7px] leading-[1.2] font-black print:text-black">
-              <div className="text-center pb-1 mb-1 border-b-[0.5px] border-slate-300">
-                <div className="text-[10px] font-black uppercase leading-none">MALLA REDDY (MR)</div>
-                <div className="text-[6.3px] font-black text-slate-900 mt-0.5 uppercase tracking-tighter">(DEEMED TO BE UNIVERSITY)</div>
-                <div className="text-[4.8px] font-bold text-slate-800 mt-0.25 leading-tight">Maisammaguda, Dhulapally, Secunderabad - 500100</div>
+                   <div className="border-[1.5px] border-black p-1.5 rounded-sm bg-white text-[7px] leading-[1.2] font-sans text-black">
+              <div className="flex flex-col pb-1 mb-1 border-b-[1px] border-black text-left pl-[28px] relative">
+                <div className="w-[20px] h-[20px] absolute left-0 top-0 mix-blend-multiply opacity-50 bg-slate-200"></div> {/* Dummy logo */}
+                <div className="text-[9px] font-black uppercase leading-none text-black">MALLA REDDY (MR)</div>
+                <div className="text-[4.5px] font-bold mt-0.5 uppercase tracking-tighter text-black">UGC Autonomous Institution, NBA & NAAC "A" Grade</div>
+                <div className="text-[4.5px] font-bold uppercase text-black">Approved by AICTE, New Delhi, Affiliated to JNTUH</div>
               </div>
               
               <div className="flex justify-center mb-1">
-                <span className="text-[7.5px] underline underline-offset-1 font-black uppercase tracking-widest">DOCUMENTS RECEIPT</span>
+                <span className="text-[7.5px] font-black uppercase tracking-widest text-black">DOCUMENTS RECEIPT</span>
               </div>
   
-              <div className="grid grid-cols-[60px_5px_1fr] gap-y-0.2 text-[6.8px] font-black">
-                <span>Enq.No</span><span>:</span><span className="uppercase">{currentStudent.admissionNo}</span>
-                <span>Name</span><span>:</span><span className="uppercase">{currentStudent.name}</span>
-                <span>Father's Name</span><span>:</span><span className="uppercase">{currentStudent.fatherName}</span>
-                <span>Year</span><span>:</span><span className="uppercase">{currentStudent.academicYear}</span>
-                <span>Program</span><span>:</span><span className="uppercase">{currentStudent.program}</span>
-                <span>Course</span><span>:</span><span className="uppercase">{currentStudent.branch}</span>
+              <div className="grid grid-cols-[60px_1fr] gap-y-0.2 text-[6px] font-semibold text-black px-1 mb-1">
+                <span className="font-bold">Enq.No</span><span>: <span className="uppercase font-semibold">{currentStudent.admissionNo}</span></span>
+                <span className="font-bold">Name</span><span>: <span className="uppercase font-semibold">{currentStudent.name}</span></span>
+                <span className="font-bold">Father's Name</span><span>: <span className="uppercase font-semibold">{currentStudent.fatherName}</span></span>
+                <span className="font-bold">Year</span><span>: <span className="uppercase font-semibold">{currentStudent.academicYear}</span></span>
+                <span className="font-bold">Course Name</span><span>: <span className="uppercase font-semibold">{currentStudent.branch} ({currentStudent.program})</span></span>
               </div>
   
-              <div className="mt-1 pb-1 border-t-[0.5px] border-slate-100">
-                 <p className="text-[5.8px] font-black border-b-[0.5px] border-slate-100 mb-0.5 pb-0.2 uppercase tracking-tighter">Documents Checklist:</p>
-                 <div className="grid grid-cols-1 gap-y-0 overflow-hidden">
+              <div className="px-1 mb-2">
+                 <div className="grid grid-cols-1 gap-y-[1px]">
                    {checklistItems.map((item) => {
                      const isGiven = docs[item.key as keyof typeof docs];
                      return (
-                       <div key={item.key} className="flex items-center gap-1 leading-none">
-                         <div className="w-[5px] h-[5px] border-[0.5px] border-slate-900 flex items-center justify-center shrink-0 rounded-[0.5px] bg-white">
-                           {isGiven && <span className="text-[4px] font-black">✓</span>}
+                       <div key={item.key} className="flex items-center gap-[3px] leading-none">
+                         <div className="w-[6px] h-[6px] border-[0.75px] border-black flex items-center justify-center shrink-0 bg-white">
+                           {isGiven && <span className="text-[5px] font-black text-black">✓</span>}
                          </div>
-                         <span className="text-[4px] font-bold uppercase truncate">{item.label}</span>
+                         <span className="text-[5px] font-semibold text-black">{item.label}</span>
                        </div>
                      );
                    })}
                    {docs.others && (
-                     <div className="flex items-center gap-1 leading-none">
-                       <div className="w-[5px] h-[5px] border-[0.5px] border-slate-900 flex items-center justify-center shrink-0 rounded-[0.5px] bg-white">
-                         <span className="text-[4px] font-black">✓</span>
+                     <div className="flex items-center gap-[3px] leading-none pt-0.5 mt-0.5">
+                       <div className="w-[6px] h-[6px] border-[0.75px] border-black flex items-center justify-center shrink-0 bg-white">
+                         <span className="text-[5px] font-black text-black">✓</span>
                        </div>
-                       <span className="text-[4px] font-bold uppercase truncate">{docs.others}</span>
+                       <span className="text-[5px] font-semibold text-black uppercase truncate">{docs.others}</span>
                      </div>
                    )}
                  </div>
               </div>
   
-              <div className="mt-2.5 flex justify-end">
-                <div className="text-right border-t-[0.5px] border-slate-200 pt-0.5">
-                  <p className="text-[5px] text-slate-900 font-black uppercase tracking-wider">Authorized Signature</p>
-                </div>
+              <div className="mt-1 flex justify-end pr-1 mb-1">
+                 <div className="text-center">
+                    <div className="w-10 border-b-[0.75px] border-black mb-[1px]"></div>
+                    <p className="text-[5px] text-black font-bold">Admin</p>
+                 </div>
               </div>
-
-              <div className="mt-1.5 border border-slate-900 p-1 text-[5px] leading-tight font-bold bg-slate-50/30">
-                <span className="font-black">Note:</span> Parents are requested to preserve this receipt for future clarifications...
+ 
+              <div className="border-t-[1.5px] border-black mt-[1px] pt-1 px-1">
+                 <p className="text-[5px] text-black leading-[1.3] text-justify font-semibold">
+                   <span className="font-bold">Note: </span>
+                   Parents are requested to preserve this receipt for future clarifications...
+                 </p>
               </div>
             </div>
         </div>
