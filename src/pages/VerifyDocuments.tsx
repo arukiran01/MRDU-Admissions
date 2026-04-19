@@ -57,7 +57,7 @@ export default function VerifyDocuments() {
   const handleHold = async () => {
     await updateStudent(currentStudent.id, {
       documents: docs,
-      status: 'Pending',
+      status: 'Hold',
     });
     navigate('/dashboard');
   };

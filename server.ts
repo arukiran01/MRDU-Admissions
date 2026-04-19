@@ -1,5 +1,4 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 import * as path from 'path';
 
@@ -17,27 +16,15 @@ const SUPABASE_URL = process.env.SUPABASE_URL || MANUAL_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || MANUAL_SUPABASE_KEY;
 
 // Initialize Supabase Client
-const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) 
+const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && SUPABASE_URL.startsWith('http')) 
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
   : null;
 
 console.log(`Backend: Supabase client initialized with URL: ${SUPABASE_URL?.substring(0, 15)}...`);
 if (SUPABASE_SERVICE_ROLE_KEY === MANUAL_SUPABASE_KEY) {
-  console.warn("Backend: WARNING - Using hardcoded FALLBACK Supabase key. This may lead to permission issues if RLS is strict.");
+  console.warn("Backend: WARNING - Using hardcoded FALLBACK Supabase key.");
 } else {
   console.log("Backend: Using CUSTOM Supabase Service Role Key from environment.");
-}
-
-// Validate table existence on startup
-if (supabase) {
-  supabase.from('students').select('id').limit(1).then(({ error }) => {
-    if (error) {
-      console.error("CRITICAL: Supabase 'students' table check failed!", error.message);
-      console.error("Please run the supabase-schema.sql script in your Supabase SQL Editor.");
-    } else {
-      console.log("Supabase: 'students' table verified successfully.");
-    }
-  });
 }
 
 let fallbackMemoryStudents: any[] = [];
@@ -141,8 +128,12 @@ apiRouter.put('/students/:id', async (req, res) => {
     if (supabase) {
       const { data, error } = await supabase.from('students').update(updates).eq('id', id).select();
       if (error) {
-        console.error("Supabase Update Error:", error);
-        throw error;
+        console.error("Supabase Update Response Error:", JSON.stringify(error, null, 2));
+        return res.status(400).json({ 
+          error: "Supabase update rejected", 
+          details: error.message,
+          code: error.code 
+        });
       }
       console.log(`Supabase: Successfully updated student ${id}.`);
     } else {
@@ -197,12 +188,21 @@ app.use((err: any, req: any, res: any, next: any) => {
 // === VITE FRONTEND MIDDLEWARE ===
 async function setupFrontend() {
   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
+    try {
+      // Use dynamic import to avoid bundling vite in production/Vercel
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (e) {
+      console.error("Failed to load Vite Dev Server:", e);
+    }
+  } else if (!process.env.VERCEL) {
+    // On Vercel, static files are handled by the vercel.json rewrites, 
+    // so we don't need to serve them here. 
+    // This block only runs if we are in production but NOT on Vercel.
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -211,14 +211,15 @@ async function setupFrontend() {
   }
 }
 
-// Start server
-setupFrontend().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend: Server successfully started on http://localhost:${PORT}`);
-    console.log(`Backend: Health Check available at http://localhost:${PORT}/api/health`);
+// Start server (Only if not in a serverless environment like Vercel)
+if (!process.env.VERCEL) {
+  setupFrontend().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Backend: Server successfully started on http://localhost:${PORT}`);
+    });
+  }).catch(err => {
+    console.error("Backend: Failed to start server:", err);
   });
-}).catch(err => {
-  console.error("Backend: Failed to start server:", err);
-});
+}
 
 export default app;
