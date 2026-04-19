@@ -18,7 +18,7 @@ export interface Student {
     rankCard: boolean;
     others: string;
   };
-  status: 'Pending' | 'Verified' | 'Hold';
+  status: 'Pending' | 'Verified';
   createdAt: string;
   academicYear: string;
 }

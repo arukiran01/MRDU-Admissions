@@ -3,30 +3,86 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Users } from 'lucide-react';
 
 export default function VerifyDocuments() {
-  const { currentStudent, updateStudent, students, setCurrentStudent } = useAppContext();
+  const { currentStudent, updateStudent, students, setCurrentStudent, isLoading } = useAppContext();
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // If there's no current student, just pick the last one or redirect
+  // If there's no current student, just pick the most recent one
   useEffect(() => {
     if (!currentStudent && students.length > 0) {
-      setCurrentStudent(students[0]);
-    } else if (!currentStudent && students.length === 0) {
+      // Sort by date to get the most recent unsynced one if needed
+      const sorted = [...students].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      // Prefer a pending one
+      const pending = sorted.find(s => s.status === 'Pending');
+      setCurrentStudent(pending || sorted[0]);
+    } else if (!currentStudent && students.length === 0 && !isLoading) {
       navigate('/add-student');
     }
-  }, [currentStudent, students, navigate, setCurrentStudent]);
+  }, [currentStudent, students, navigate, setCurrentStudent, isLoading]);
 
-  if (!currentStudent) return null;
+  if (!currentStudent) {
+    const pendingStudents = students.filter(s => s.status === 'Pending');
+    
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Document Verification</h2>
+            <p className="text-sm text-slate-500 mt-1">Select a student from the list below to begin document verification.</p>
+          </div>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-md transition-all"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pendingStudents.length > 0 ? (
+            pendingStudents.map(student => (
+              <motion.div 
+                key={student.id}
+                whileHover={{ y: -4, shadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-400 transition-all group"
+                onClick={() => setCurrentStudent(student)}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                    {student.name.charAt(0)}
+                  </div>
+                  <span className="text-[10px] uppercase font-black px-2 py-0.5 bg-amber-50 text-amber-600 rounded">Pending</span>
+                </div>
+                <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate">{student.name}</h3>
+                <p className="text-[11px] text-slate-500 font-semibold mb-3">Adm No: {student.admissionNo}</p>
+                <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
+                  <span className="text-[11px] text-slate-400 font-medium">{student.branch}</span>
+                  <span className="text-[11px] text-blue-600 font-bold group-hover:underline">Start Verification →</span>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 bg-white rounded-xl border border-slate-200 border-dashed text-center">
+              <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-slate-600 font-bold">No Pending Verifications</h3>
+              <p className="text-slate-400 text-sm mt-1">All registered students have been verified or there are no new registrations.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const [docs, setDocs] = useState(currentStudent.documents);
 
   // Keep docs in sync if currentStudent changes
   useEffect(() => {
     setDocs(currentStudent.documents);
-  }, [currentStudent]);
+  }, [currentStudent?.id]); // Use id to avoid infinite loop
 
   const checklistItems: { key: DocumentKey; label: string }[] = [
     { key: 'ssc', label: '10th Class Memo (SSC)' },
@@ -57,7 +113,7 @@ export default function VerifyDocuments() {
   const handleHold = async () => {
     await updateStudent(currentStudent.id, {
       documents: docs,
-      status: 'Hold',
+      status: 'Pending',
     });
     navigate('/dashboard');
   };

@@ -24,6 +24,7 @@ export default function AddStudent() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
 
   const branches = [
     'CSE',
@@ -35,19 +36,45 @@ export default function AddStudent() {
     'Civil',
   ];
 
+  const validatePhone = (phone: string) => {
+    return /^[6-9]\d{9}$/.test(phone);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === 'parentPhone') {
+      if (value.length > 0 && !validatePhone(value)) {
+        setPhoneError(true);
+      } else {
+        setPhoneError(false);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final validation check
+    if (!validatePhone(formData.parentPhone)) {
+      setPhoneError(true);
+      alert("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+
     setIsSubmitting(true);
     
     const newStudent: Student = {
       // Using interHallTicket as the primary key ID per user request
-      id: formData.interHallTicket,
+      id: formData.interHallTicket.trim(),
       ...formData,
+      name: formData.name.trim(),
+      admissionNo: formData.admissionNo.trim(),
+      fatherName: formData.fatherName.trim(),
+      parentPhone: formData.parentPhone.trim(),
+      interHallTicket: formData.interHallTicket.trim(),
+      academicYear: formData.academicYear.trim(),
       documents: {
         ssc: false,
         schoolBonafide: false,
@@ -64,9 +91,11 @@ export default function AddStudent() {
       createdAt: new Date().toISOString(),
     };
 
-    await addStudent(newStudent);
+    const success = await addStudent(newStudent);
     setIsSubmitting(false);
-    navigate('/verify');
+    if (success) {
+      navigate('/verify');
+    }
   };
 
   return (
@@ -188,9 +217,19 @@ export default function AddStudent() {
                 value={formData.parentPhone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="10-digit number"
+                maxLength={10}
+                className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 outline-none transition-all ${
+                  phoneError 
+                    ? 'border-red-300 bg-red-50 focus:ring-red-500' 
+                    : 'border-slate-200 focus:ring-blue-500 focus:border-blue-500'
+                }`}
+                placeholder="10-digit mobile number"
               />
+              {phoneError && (
+                <p className="text-[10px] text-red-600 mt-1.5 font-semibold">
+                  Please enter a valid 10-digit mobile number starting with 6-9
+                </p>
+              )}
             </div>
 
             <div>

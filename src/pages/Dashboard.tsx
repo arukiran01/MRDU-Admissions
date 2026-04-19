@@ -22,7 +22,11 @@ export default function Dashboard() {
 
   const handleVerify = (student: Student) => {
     setCurrentStudent(student);
-    navigate('/verify');
+    if (student.status === 'Verified') {
+      navigate('/receipt');
+    } else {
+      navigate('/verify');
+    }
   };
 
   const handleEditClick = (student: Student) => {
@@ -108,14 +112,6 @@ export default function Dashboard() {
       icon: UserCheck,
       color: 'text-white',
       bgColor: 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-200',
-      iconBg: 'bg-white/20 text-white'
-    },
-    { 
-      label: 'On Hold', 
-      value: students.filter((s) => s.status === 'Hold').length, 
-      icon: Clock,
-      color: 'text-white',
-      bgColor: 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-200',
       iconBg: 'bg-white/20 text-white'
     },
     { 
@@ -208,7 +204,6 @@ export default function Dashboard() {
               <option value="">All Statuses</option>
               <option value="Verified">Verified</option>
               <option value="Pending">Pending</option>
-              <option value="Hold">On Hold</option>
             </select>
 
             <select 
@@ -265,9 +260,7 @@ export default function Dashboard() {
                         className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
                           student.status === 'Verified' 
                             ? 'text-emerald-600 bg-emerald-50' 
-                            : student.status === 'Hold'
-                              ? 'text-rose-600 bg-rose-50'
-                              : 'text-amber-600 bg-amber-50'
+                            : 'text-amber-600 bg-amber-50'
                         }`}
                       >
                         {student.status.toUpperCase()}

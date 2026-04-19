@@ -45,9 +45,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           setDbStatus('memory');
         }
       } else {
+        const text = await response.text();
+        console.error(`Health check failed (${response.status}):`, text.substring(0, 50));
         setDbStatus('error');
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Health check fetch error (Failed to fetch):", e.message);
       setDbStatus('error');
     }
   };
@@ -60,7 +63,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       if (response.ok) {
         try {
-          const data = await response.json();
+          const rawData = await response.json();
+          // Normalize status: treat 'Hold' as 'Pending' for UI consistency
+          const data = rawData.map((s: any) => ({
+            ...s,
+            status: s.status === 'Hold' ? 'Pending' : s.status
+          }));
+          
           setStudents((prev) => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
           
           if (currentStudent) {
@@ -86,29 +95,43 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     checkHealth();
     fetchStudents();
 
-    let subscription: any = null;
+    let channel: any = null;
 
     if (supabase) {
-      subscription = supabase
-        .channel('students-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, (payload) => {
-          fetchStudents();
-        })
-        .subscribe();
+      console.log("Supabase: Setting up Realtime channel...");
+      channel = supabase
+        .channel('public:students')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'students' },
+          (payload) => {
+            console.log("Supabase: Realtime change detected:", payload.eventType);
+            fetchStudents();
+          }
+        )
+        .subscribe((status) => {
+          console.log("Supabase: Realtime subscription status:", status);
+        });
     }
 
+    // Polling as a safety net (slower)
     const interval = setInterval(() => {
-      fetchStudents();
-      checkHealth();
-    }, 5000); 
+      if (dbStatus !== 'connected') {
+        fetchStudents();
+        checkHealth();
+      }
+    }, 15000); 
     
     return () => {
-      if (subscription) supabase?.removeChannel(subscription);
+      if (channel) {
+        supabase?.removeChannel(channel);
+      }
       clearInterval(interval);
     };
-  }, [currentStudent?.id]);
+  }, []); // Run on mount only
 
   const addStudent = async (student: Student) => {
+    const previousStudents = [...students];
     setStudents((prev) => [student, ...prev]);
     setCurrentStudent(student);
 
@@ -124,17 +147,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         let errorMessage = "Database insertion failed";
         try {
           const data = JSON.parse(text);
-          errorMessage = data.error || errorMessage;
+          errorMessage = data.error || (data.details ? `${data.error}: ${data.details}` : errorMessage);
         } catch (e) {
           errorMessage = `Server Error (${response.status}): ${text.substring(0, 100)}...`;
         }
         throw new Error(errorMessage);
       }
       await fetchStudents();
+      return true;
     } catch (e: any) {
       console.error("Failed adding to backend:", e);
       alert(`Sync Error: ${e.message}`);
+      setStudents(previousStudents);
       await fetchStudents();
+      return false;
     }
   };
 

@@ -20,7 +20,14 @@ const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && SUPABASE_URL.star
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
   : null;
 
-console.log(`Backend: Supabase client initialized with URL: ${SUPABASE_URL?.substring(0, 15)}...`);
+if (!supabase) {
+  console.warn("Backend: Supabase client FAILED to initialize.");
+  console.warn(` - URL exists: ${!!SUPABASE_URL} (${SUPABASE_URL?.substring(0, 10)}...)`);
+  console.warn(` - Key exists: ${!!SUPABASE_SERVICE_ROLE_KEY}`);
+  console.warn(` - URL starts with http: ${SUPABASE_URL?.startsWith('http')}`);
+} else {
+  console.log("Backend: Supabase client initialized successfully.");
+}
 if (SUPABASE_SERVICE_ROLE_KEY === MANUAL_SUPABASE_KEY) {
   console.warn("Backend: WARNING - Using hardcoded FALLBACK Supabase key.");
 } else {
@@ -92,12 +99,38 @@ apiRouter.get('/students', async (req, res) => {
 
 apiRouter.post('/students', async (req, res) => {
   const student = req.body;
+  
+  // Server-side validation
+  const requiredFields = ['name', 'admissionNo', 'fatherName', 'branch', 'parentPhone', 'interHallTicket', 'academicYear'];
+  const missingFields = requiredFields.filter(field => !student[field] || (typeof student[field] === 'string' && !student[field].trim()));
+  
+  if (missingFields.length > 0) {
+    return res.status(400).json({ 
+      error: "Missing Required Fields", 
+      details: `Please provide all required fields: ${missingFields.join(', ')}` 
+    });
+  }
+
+  // Phone validation (10 digits)
+  if (!/^[6-9]\d{9}$/.test(student.parentPhone)) {
+    return res.status(400).json({ 
+      error: "Invalid Phone Number", 
+      details: "Parent phone must be a valid 10-digit mobile number." 
+    });
+  }
+
   console.log("Supabase: Attempting to insert student:", student.name);
   try {
     if (supabase) {
       const { data, error } = await supabase.from('students').insert([student]).select();
       if (error) {
-        console.error("Supabase Insert Error:", error);
+        console.error("Supabase Insert Response Error:", JSON.stringify(error, null, 2));
+        if (error.code === '23505') {
+          return res.status(409).json({ 
+            error: "Duplicate Student Record", 
+            details: "A student with this Inter Hall Ticket already exists in the system." 
+          });
+        }
         throw error;
       }
       console.log("Supabase: Successfully inserted student.");
@@ -211,15 +244,25 @@ async function setupFrontend() {
   }
 }
 
-// Start server (Only if not in a serverless environment like Vercel)
-if (!process.env.VERCEL) {
-  setupFrontend().then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Backend: Server successfully started on http://localhost:${PORT}`);
-    });
-  }).catch(err => {
-    console.error("Backend: Failed to start server:", err);
+// === STARTUP ===
+async function start() {
+  await setupFrontend();
+  
+  // Always listen if we're in development or if explicitly not on Vercel
+  // Even on Vercel, this won't hurt as Vercel ignores the listen call in serverless mode
+  // but it ensures we start correctly in this environment.
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend Ready: Listening on port ${PORT}`);
   });
+}
+
+// Only run automatically if this is the main entry point
+// In ESM, we can check process.argv
+if (process.argv[1] && (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.js'))) {
+  start();
+} else {
+  // If being imported (e.g. by a test or Vercel), just setup frontend but don't listen
+  setupFrontend();
 }
 
 export default app;

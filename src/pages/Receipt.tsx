@@ -22,7 +22,7 @@ export default function Receipt() {
   const handlePrint = async () => {
     await logAction('Receipt Generation', `Generated receipt for student ${currentStudent.name} (Admission No: ${currentStudent.admissionNo}).`, currentStudent.id);
     const originalTitle = document.title;
-    document.title = 'admissionslip';
+    document.title = `${currentStudent.admissionNo} Certificate Slip`;
     window.print();
     document.title = originalTitle;
   };
@@ -59,7 +59,7 @@ export default function Receipt() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Admission_Slip_${currentStudent.admissionNo}_${currentStudent.name.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`${currentStudent.admissionNo}_Certificate_Slip.pdf`);
     } catch (error) {
       console.error('PDF Error:', error);
       alert('PDF generation encountered a temporary limit. \n\nPlease use the "Print Receipt" button and select "Save as PDF" specifically for a high-quality A4 copy.');

@@ -131,13 +131,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Help for Admin</p>
-             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed px-2">
-               Make sure you have created the account <b>admin@mrdu.edu.in</b> in your Supabase Auth dashboard before trying to sign in.
-             </p>
-          </div>
         </div>
       </motion.div>
     </div>
