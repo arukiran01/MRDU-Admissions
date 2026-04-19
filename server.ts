@@ -21,6 +21,18 @@ const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
   : null;
 
+// Validate table existence on startup
+if (supabase) {
+  supabase.from('students').select('id').limit(1).then(({ error }) => {
+    if (error) {
+      console.error("CRITICAL: Supabase 'students' table check failed!", error.message);
+      console.error("Please run the supabase-schema.sql script in your Supabase SQL Editor.");
+    } else {
+      console.log("Supabase: 'students' table verified successfully.");
+    }
+  });
+}
+
 let fallbackMemoryStudents: any[] = [];
 
 // --- API ROUTES ---
@@ -30,7 +42,11 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    database: supabase ? 'connected' : 'memory-fallback'
+    database: supabase ? (SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable') ? 'connected-as-anon' : 'connected-as-service-role') : 'disconnected',
+    config: {
+      hasUrl: !!SUPABASE_URL,
+      hasKey: !!SUPABASE_SERVICE_ROLE_KEY
+    }
   });
 });
 
@@ -38,28 +54,40 @@ app.get('/api/health', (req, res) => {
 app.get('/api/students', async (req, res) => {
   try {
     if (supabase) {
+      console.log("Supabase: Fetching all students...");
       const { data, error } = await supabase
         .from('students')
         .select('*')
         .order('createdAt', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Select Error:", error);
+        throw error;
+      }
+      console.log(`Supabase: Successfully fetched ${data?.length || 0} students.`);
       return res.json(data);
     }
+    console.warn("Supabase: Client not initialized. Using memory fallback.");
     res.json(fallbackMemoryStudents);
   } catch (error: any) {
-    console.error("Fetch Students Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Fetch Students Route Error:", error);
+    res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 });
 
 app.post('/api/students', async (req, res) => {
   const student = req.body;
+  console.log("Supabase: Attempting to insert student:", student.name);
   try {
     if (supabase) {
-      const { error } = await supabase.from('students').insert([student]);
-      if (error) throw error;
+      const { data, error } = await supabase.from('students').insert([student]).select();
+      if (error) {
+        console.error("Supabase Insert Error:", error);
+        throw error;
+      }
+      console.log("Supabase: Successfully inserted student.");
     } else {
+      console.warn("Supabase: Client missing. Saving to local memory.");
       fallbackMemoryStudents = [student, ...fallbackMemoryStudents];
     }
     const sheetsWebhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
@@ -72,25 +100,31 @@ app.post('/api/students', async (req, res) => {
     }
     res.status(201).json({ success: true, student });
   } catch (error: any) {
-    console.error("Create Student Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Create Student Route Error:", error);
+    res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 });
 
 app.put('/api/students/:id', async (req, res) => {
   const { id } = req.params;
   const { id: _id, ...updates } = req.body;
+  console.log(`Supabase: Attempting to update student ID ${id} with status: ${updates.status}`);
   try {
     if (supabase) {
-      const { error } = await supabase.from('students').update(updates).eq('id', id);
-      if (error) throw error;
+      const { data, error } = await supabase.from('students').update(updates).eq('id', id).select();
+      if (error) {
+        console.error("Supabase Update Error:", error);
+        throw error;
+      }
+      console.log(`Supabase: Successfully updated student ${id}.`);
     } else {
+      console.warn("Supabase: Client missing. Updating local memory.");
       fallbackMemoryStudents = fallbackMemoryStudents.map((s) => s.id === id ? { ...s, ...updates } : s);
     }
     res.json({ success: true });
   } catch (error: any) {
-    console.error("Update Student Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Update Student Route Error:", error);
+    res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 });
 

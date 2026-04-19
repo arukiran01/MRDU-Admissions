@@ -6,12 +6,18 @@ import {
   UserPlus, 
   CheckSquare, 
   FileText, 
-  LogOut 
+  LogOut,
+  Database,
+  Wifi,
+  WifiOff,
+  RefreshCcw
 } from 'lucide-react';
+import { useAppContext } from '../../store/AppContext';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { dbStatus } = useAppContext();
 
   const handleLogout = () => {
     navigate('/login');
@@ -67,7 +73,32 @@ export default function Layout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Navbar */}
         <header className="h-[60px] bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
-          <div /> {/* Spacer */}
+          <div className="flex items-center gap-3">
+             {dbStatus === 'connected' && (
+               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 shadow-sm animate-pulse">
+                 <Wifi className="w-3.5 h-3.5" />
+                 <span className="text-[10px] font-black uppercase tracking-wider">Ready / Live</span>
+               </div>
+             )}
+             {dbStatus === 'memory' && (
+               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 shadow-sm">
+                 <Database className="w-3.5 h-3.5" />
+                 <span className="text-[10px] font-black uppercase tracking-wider">Storage-Mode / Memory</span>
+               </div>
+             )}
+             {dbStatus === 'error' && (
+               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-100 shadow-sm">
+                 <WifiOff className="w-3.5 h-3.5" />
+                 <span className="text-[10px] font-black uppercase tracking-wider">Sync Error</span>
+               </div>
+             )}
+             {dbStatus === 'checking' && (
+               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-400 rounded-full border border-slate-100 shadow-sm">
+                 <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                 <span className="text-[10px] font-black uppercase tracking-wider">Connecting...</span>
+               </div>
+             )}
+          </div>
           <div className="flex items-center space-x-6">
             <div className="text-right">
               <div className="text-[13px] font-semibold text-slate-800">Admin</div>

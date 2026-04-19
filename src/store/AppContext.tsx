@@ -3,8 +3,11 @@ import { Student } from '../types';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Client for Frontend (Real-time)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const MANUAL_SUPABASE_URL = "https://laaholzwfjahuugaqzfh.supabase.co";
+const MANUAL_SUPABASE_KEY = "sb_publishable_jyfddtLDeyAYEM15IxqjEg_pku83Toq";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || MANUAL_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || MANUAL_SUPABASE_KEY;
 const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 interface AppContextType {
@@ -17,6 +20,7 @@ interface AppContextType {
   currentStudent: Student | null;
   setCurrentStudent: (student: Student | null) => void;
   isLoading: boolean;
+  dbStatus: 'connected' | 'error' | 'memory' | 'checking';
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -25,6 +29,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<'connected' | 'error' | 'memory' | 'checking'>('checking');
+
+  const checkHealth = async () => {
+    try {
+      const response = await fetch('/api/health');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.database === 'connected-as-anon' || data.database === 'connected-as-service-role') {
+          setDbStatus('connected');
+        } else if (data.database === 'memory-fallback' || data.database === 'disconnected') {
+          setDbStatus('memory');
+        }
+      } else {
+        setDbStatus('error');
+      }
+    } catch (e) {
+      setDbStatus('error');
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -52,22 +75,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Real-time Subscriptions + Fallback Polling
   useEffect(() => {
+    checkHealth();
     fetchStudents();
 
     let subscription: any = null;
 
     if (supabase) {
-      console.log("Initializing Supabase Real-time Subscription...");
       subscription = supabase
         .channel('students-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, (payload) => {
-          console.log('Real-time change detected:', payload);
-          fetchStudents(); // Trigger fresh fetch on any change
+          fetchStudents();
         })
         .subscribe();
     }
 
-    const interval = setInterval(fetchStudents, 5000); // Polling as backup
+    const interval = setInterval(() => {
+      fetchStudents();
+      checkHealth();
+    }, 5000); 
     
     return () => {
       if (subscription) supabase?.removeChannel(subscription);
@@ -76,11 +101,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [currentStudent?.id]);
 
   const addStudent = async (student: Student) => {
-    // Optimistic UI update
     setStudents((prev) => [student, ...prev]);
     setCurrentStudent(student);
 
-    // Backend sync
     try {
       const response = await fetch('/api/students', {
         method: 'POST',
@@ -88,30 +111,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify(student)
       });
       
-      if (!response.ok) throw new Error("Database insertion failed");
-      
-      // Refresh to ensure absolute sync with backend
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Database insertion failed");
+      }
       await fetchStudents();
-    } catch (e) {
-      console.error("Failed writing to backend:", e);
-      // Revert/refresh on failure
+    } catch (e: any) {
+      console.error("Failed adding to backend:", e);
+      alert(`Backend Error: ${e.message}`);
       await fetchStudents();
     }
   };
 
   const updateStudent = async (id: string, data: Partial<Student>) => {
-    // Capture state for potential rollback
     const previousStudents = [...students];
-
-    // Optimistic UI update
-    setStudents((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...data } : s))
-    );
+    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
     if (currentStudent?.id === id) {
       setCurrentStudent((prev) => (prev ? { ...prev, ...data } : null));
     }
 
-    // Backend sync
     try {
       const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -119,11 +137,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify(data)
       });
       
-      if (!response.ok) throw new Error("Update failed");
-      
+      if (!response.ok) {
+        const resData = await response.json();
+        throw new Error(resData.error || "Update failed");
+      }
       await fetchStudents();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed updating backend:", e);
+      alert(`Backend Error: ${e.message}`);
       setStudents(previousStudents);
     }
   };

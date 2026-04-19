@@ -61,8 +61,8 @@ export default function Receipt() {
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Admission_Slip_${currentStudent.admissionNo}_${currentStudent.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('PDF generation failed partially. This is often due to browser memory limits. \n\nPRO TIP: Use the "Print Receipt" button and choose "Save as PDF" in the print destination for a perfect A4 copy.');
+      console.error('PDF Error:', error);
+      alert('PDF generation encountered a temporary limit. \n\nPlease use the "Print Receipt" button and select "Save as PDF" specifically for a high-quality A4 copy.');
     } finally {
       setIsDownloading(false);
     }
