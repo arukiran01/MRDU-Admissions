@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Users, UploadCloud, Eye, X } from 'lucide-react';
+import { CheckCircle2, Users, UploadCloud, Eye, X, Maximize2, Minimize2, Move } from 'lucide-react';
+import Draggable from 'react-draggable';
 import { getChecklistItems } from '../constants';
 
 export default function VerifyDocuments() {
@@ -11,6 +12,7 @@ export default function VerifyDocuments() {
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{ url: string, name: string } | null>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   // If there's no current student, just pick the most recent one
   useEffect(() => {
@@ -408,43 +410,58 @@ export default function VerifyDocuments() {
       <AnimatePresence>
         {previewDoc && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-50 pointer-events-none"
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-w-4xl w-full max-h-[90vh]"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="font-bold text-slate-800">{previewDoc.name}</h3>
-                <div className="flex items-center gap-3">
-                  <a 
-                    href={previewDoc.url}
-                    download={previewDoc.name}
-                    className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-md transition-colors shadow-sm"
-                  >
-                    Download Original
-                  </a>
-                  <button 
-                    onClick={() => setPreviewDoc(null)}
-                    className="p-2 text-slate-400 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-full transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+            <Draggable handle=".drag-handle" disabled={isMaximized}>
+              <div 
+                className={`pointer-events-auto absolute bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col border border-slate-300 ${isMaximized ? 'inset-4 !transform-none' : 'bottom-8 right-8 w-full max-w-2xl h-[70vh] min-h-[500px]'}`}
+              >
+                <div className="drag-handle flex items-center justify-between p-3 border-b border-slate-200 bg-slate-50 cursor-move border-t-2 border-t-blue-500">
+                  <div className="flex items-center gap-3 pl-1">
+                    <Move className="w-5 h-5 text-slate-400" />
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm leading-tight">{previewDoc.name}</h3>
+                      <p className="text-[11px] text-slate-500 uppercase tracking-tight">{currentStudent.name} • {currentStudent.admissionNo}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pr-1">
+                    <a 
+                      href={previewDoc.url}
+                      download={previewDoc.name}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-2 px-3 py-1.5 text-[12px] font-semibold text-blue-600 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors shadow-sm"
+                    >
+                      Download
+                    </a>
+                    <button 
+                      onClick={() => setIsMaximized(!isMaximized)}
+                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-200 rounded transition-colors bg-white shadow-sm border border-slate-200"
+                    >
+                      {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setPreviewDoc(null);
+                        setIsMaximized(false);
+                      }}
+                      className="p-1.5 text-slate-500 hover:text-white hover:bg-rose-500 rounded transition-colors bg-white shadow-sm border border-slate-200"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-0 overflow-auto bg-slate-100 flex-1 flex justify-center items-center">
+                  {previewDoc.url.startsWith('data:application/pdf') ? (
+                    <iframe src={previewDoc.url} className="w-full h-full bg-white" title={previewDoc.name} />
+                  ) : (
+                    <img src={previewDoc.url} alt={previewDoc.name} className="max-w-full max-h-[100%] object-contain" />
+                  )}
                 </div>
               </div>
-              <div className="p-4 overflow-auto bg-slate-50 flex-1 flex justify-center items-center">
-                {previewDoc.url.startsWith('data:application/pdf') ? (
-                  <iframe src={previewDoc.url} className="w-full h-[70vh] rounded-lg border border-slate-200" title={previewDoc.name} />
-                ) : (
-                  <img src={previewDoc.url} alt={previewDoc.name} className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200" />
-                )}
-              </div>
-            </motion.div>
+            </Draggable>
           </motion.div>
         )}
       </AnimatePresence>
