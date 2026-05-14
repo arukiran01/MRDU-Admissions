@@ -27,7 +27,7 @@ export default function AddStudent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
 
-  const programs = ['UG', 'PG', 'PHD'];
+  const programs = ['UG', 'PG'];
 
   const getBranches = (program: string) => {
     switch (program) {
@@ -35,8 +35,6 @@ export default function AddStudent() {
         return ['CSE', 'CSE-AI&ML', 'CSE-DS', 'CSE-CS', 'ECE', 'EEE', 'CIVIL', 'MECH', 'BBA', 'BCA', 'BIO-TECHNOLOGY'];
       case 'PG':
         return ['CSE', 'ELECTRICAL POWER SYSTEMS', 'STRUCTURAL ENGINEERING', 'VLSI & EMBEDDED SYSTEMS', 'THERMAL ENGINEERING', 'MBA', 'MCA'];
-      case 'PHD':
-        return ['CSE', 'EEE', 'ECE', 'MECH', 'CIVIL', 'MATHS', 'ENGLISH'];
       default:
         return [];
     }
@@ -98,7 +96,7 @@ export default function AddStudent() {
     setIsSubmitting(true);
     
     const newStudent: Student = {
-      id: formData.interHallTicket.trim(),
+      id: crypto.randomUUID(),
       ...formData,
       name: formData.name.trim().toUpperCase(),
       admissionNo: formData.admissionNo.trim(),

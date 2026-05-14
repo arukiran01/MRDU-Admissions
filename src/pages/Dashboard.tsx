@@ -41,33 +41,37 @@ export default function Dashboard() {
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
         
-        const studentsToInsert = data.map((row: any) => ({
-          admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',
-          name: row['Student Name'] || row['Name'] || row['name'] || '',
-          fatherName: row['Father Name'] || row['fatherName'] || '',
-          program: row['Program'] || 'UG',
-          branch: row['Branch'] || '',
-          parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || ''),
-          interHallTicket: String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || Math.random().toString(36).substring(2, 10).toUpperCase()),
-          academicYear: row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
-          status: 'Pending',
-          documents: {
-            sscMemo: false,
-            sscBonafide: false,
-            schoolBonafide6to9: false,
-            tc: false,
-            interPC: false,
-            interBonafide: false,
-            aadhaar: false,
-            degreeCMM: false,
-            degreePC: false,
-            degreeBonafide: false,
-            pgCMM: false,
-            pgPC: false,
-            pgBonafide: false,
-            others: ""
-          }
-        })).filter(s => s.name && s.admissionNo);
+        const studentsToInsert = data.map((row: any) => {
+          const interHallTicket = String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || crypto.randomUUID().split('-')[0].toUpperCase());
+          return {
+            id: crypto.randomUUID(),
+            admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',
+            name: row['Student Name'] || row['Name'] || row['name'] || '',
+            fatherName: row['Father Name'] || row['fatherName'] || '',
+            program: row['Program'] || 'UG',
+            branch: row['Branch'] || '',
+            parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || ''),
+            interHallTicket: interHallTicket,
+            academicYear: row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
+            status: 'Pending',
+            documents: {
+              sscMemo: false,
+              sscBonafide: false,
+              schoolBonafide6to9: false,
+              tc: false,
+              interPC: false,
+              interBonafide: false,
+              aadhaar: false,
+              degreeCMM: false,
+              degreePC: false,
+              degreeBonafide: false,
+              pgCMM: false,
+              pgPC: false,
+              pgBonafide: false,
+              others: ""
+            }
+          };
+        }).filter((s: any) => s.name && s.admissionNo);
         
         if (studentsToInsert.length > 0) {
           if (supabase) {
@@ -387,7 +391,6 @@ export default function Dashboard() {
               <option value="">By Program</option>
               <option value="UG">UG</option>
               <option value="PG">PG</option>
-              <option value="PHD">PHD</option>
             </select>
 
             <select 
@@ -639,13 +642,22 @@ export default function Dashboard() {
               </div>
 
               <form onSubmit={handleUpdateStudent} className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1">
                   <div className="col-span-2">
                     <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Full Name</label>
                     <input 
                       type="text" 
                       value={editingStudent.name}
-                      onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
+                      onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value.toUpperCase()})}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Father's Name</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.fatherName || ''}
+                      onChange={(e) => setEditingStudent({...editingStudent, fatherName: e.target.value.toUpperCase()})}
                       className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
                     />
                   </div>
@@ -659,21 +671,32 @@ export default function Dashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Academic Year</label>
+                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Inter Hall Ticket</label>
                     <input 
                       type="text" 
-                      value={editingStudent.academicYear}
-                      onChange={(e) => setEditingStudent({...editingStudent, academicYear: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={editingStudent.interHallTicket || ''}
+                      onChange={(e) => setEditingStudent({...editingStudent, interHallTicket: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
                     />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Program</label>
+                    <select
+                      value={editingStudent.program || ''}
+                      onChange={(e) => setEditingStudent({...editingStudent, program: e.target.value as 'UG' | 'PG'})}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      <option value="UG">UG</option>
+                      <option value="PG">PG</option>
+                    </select>
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Branch</label>
                     <input 
                       type="text" 
                       value={editingStudent.branch}
-                      onChange={(e) => setEditingStudent({...editingStudent, branch: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
+                      onChange={(e) => setEditingStudent({...editingStudent, branch: e.target.value.toUpperCase()})}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
                     />
                   </div>
                   <div>
@@ -682,6 +705,15 @@ export default function Dashboard() {
                       type="text" 
                       value={editingStudent.parentPhone}
                       onChange={(e) => setEditingStudent({...editingStudent, parentPhone: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Academic Year</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.academicYear}
+                      onChange={(e) => setEditingStudent({...editingStudent, academicYear: e.target.value})}
                       className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                   </div>

@@ -126,7 +126,10 @@ export default function VerifyDocuments() {
     }
   };
 
-  const isAllSubmitted = checklistItems.every(item => docs[item.key as keyof typeof docs]);
+  const isAllChecklistSubmited = checklistItems.every(item => docs[item.key as keyof typeof docs]);
+  const isOthersSpecified = docs.others && docs.others.trim().length > 0;
+  // If either all checklist items are ticked OR the administration specified something in 'others' as an override/supplement 
+  const isAllSubmitted = isAllChecklistSubmited || isOthersSpecified;
   const calculatedStatus = isAllSubmitted ? 'Verified' : 'Pending';
 
   const handleHold = async () => {
@@ -420,12 +423,21 @@ export default function VerifyDocuments() {
             >
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
                 <h3 className="font-bold text-slate-800">{previewDoc.name}</h3>
-                <button 
-                  onClick={() => setPreviewDoc(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <a 
+                    href={previewDoc.url}
+                    download={previewDoc.name}
+                    className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-md transition-colors shadow-sm"
+                  >
+                    Download Original
+                  </a>
+                  <button 
+                    onClick={() => setPreviewDoc(null)}
+                    className="p-2 text-slate-400 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               <div className="p-4 overflow-auto bg-slate-50 flex-1 flex justify-center items-center">
                 {previewDoc.url.startsWith('data:application/pdf') ? (

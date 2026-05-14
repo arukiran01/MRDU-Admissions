@@ -3,7 +3,7 @@ export interface Student {
   name: string;
   admissionNo: string;
   fatherName: string;
-  program: 'UG' | 'PG' | 'PHD';
+  program: 'UG' | 'PG';
   branch: string;
   parentPhone: string;
   interHallTicket: string;
