@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface AppContextType {
   students: Student[];
   addStudent: (student: Student) => Promise<{ success: boolean; errorMessage?: string }>;
-  updateStudent: (id: string, data: Partial<Student>) => Promise<void>;
+  updateStudent: (id: string, data: Partial<Student>) => Promise<{ success: boolean; errorMessage?: string }>;
   deleteStudent: (id: string) => Promise<void>;
   logAction: (action: string, details: string, studentId?: string) => Promise<void>;
   fetchStudents: () => Promise<void>;
@@ -67,10 +67,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       const data = (rawData || [])
         .filter((s: any) => !deletedIds.has(s.id))
-        .map((s: any) => ({
-          ...s,
-          status: s.status === 'Hold' ? 'Pending' : s.status
-        }));
+        .map((s: any) => {
+          let parsedDocs = s.documents || {};
+          if (typeof parsedDocs === 'string') {
+            try { parsedDocs = JSON.parse(parsedDocs); } catch(e) { parsedDocs = {}; }
+          }
+          let parsedFiles = s.uploadedFiles || {};
+          if (typeof parsedFiles === 'string') {
+            try { parsedFiles = JSON.parse(parsedFiles); } catch(e) { parsedFiles = {}; }
+          }
+          return {
+            ...s,
+            documents: parsedDocs,
+            uploadedFiles: parsedFiles,
+            status: s.status === 'Hold' ? 'Pending' : s.status
+          };
+        });
       
       setStudents(data);
       
@@ -160,7 +172,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           throw new Error("A student with this Inter Hall Ticket already exists.");
         }
         if (error.message?.includes("schema cache") || error.message?.includes("column")) {
-          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }
@@ -187,7 +199,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateStudent = async (id: string, data: Partial<Student>) => {
+  const updateStudent = async (id: string, data: Partial<Student>): Promise<{ success: boolean; errorMessage?: string }> => {
     const previousStudents = [...students];
     
     // Optimistic Update
@@ -198,18 +210,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     if (!supabase) {
       console.warn("Memory Mode: Update saved only to local state.");
-      return;
+      return { success: true };
     }
 
     try {
       const dbData = { ...data };
-      delete dbData.uploadedFiles;
       const { error } = await supabase.from('students').update(dbData).eq('id', id);
-      if (error) throw error;
+      
+      if (error) {
+        if (error.message?.includes("schema cache") || error.message?.includes("column")) {
+          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+        }
+        throw error;
+      }
+      
       await fetchStudents();
+      return { success: true };
     } catch (e: any) {
       console.error("Failed updating Supabase:", e.message);
       setStudents(previousStudents);
+      if (currentStudent?.id === id) {
+        // Revert current student if needed
+        const prevStudent = previousStudents.find(s => s.id === id);
+        setCurrentStudent(prevStudent || null);
+      }
+      return { success: false, errorMessage: e.message };
     }
   };
 

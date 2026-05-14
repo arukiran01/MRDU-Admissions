@@ -133,24 +133,32 @@ export default function VerifyDocuments() {
   const calculatedStatus = isAllSubmitted ? 'Verified' : 'Pending';
 
   const handleHold = async () => {
-    await updateStudent(currentStudent.id, {
+    const result = await updateStudent(currentStudent.id, {
       documents: docs,
       uploadedFiles,
       status: calculatedStatus,
     });
-    navigate('/dashboard');
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      alert("Failed to update student:\n" + (result.errorMessage || "Unknown error"));
+    }
   };
 
   const handleSubmit = async () => {
-    await updateStudent(currentStudent.id, {
+    const result = await updateStudent(currentStudent.id, {
       documents: docs,
       uploadedFiles,
       status: calculatedStatus,
     });
-    setShowSuccess(true);
-    setTimeout(() => {
-      navigate('/receipt');
-    }, 1500);
+    if (result.success) {
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate('/receipt');
+      }, 1500);
+    } else {
+      alert("Failed to update student:\n" + (result.errorMessage || "Unknown error"));
+    }
   };
 
   return (
