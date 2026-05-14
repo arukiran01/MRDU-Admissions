@@ -16,15 +16,6 @@ export default function Login() {
     setError(null);
     setLoading(true);
 
-    // RESTRICTION: Only allow one specific admin email
-    const ALLOWED_ADMIN = "admin@mrdu.edu.in";
-
-    if (email.toLowerCase() !== ALLOWED_ADMIN) {
-      setError("This account is not authorized for portal access.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,

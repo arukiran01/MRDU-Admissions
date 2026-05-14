@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Building2, 
@@ -13,13 +13,24 @@ import {
   RefreshCcw
 } from 'lucide-react';
 import { useAppContext } from '../../store/AppContext';
+import { supabase } from '../../lib/supabase';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { dbStatus } = useAppContext();
+  const [userEmail, setUserEmail] = useState<string>('Admin');
 
-  const handleLogout = () => {
+  useEffect(() => {
+    supabase?.auth.getUser().then(({ data }) => {
+      if (data?.user?.email) {
+        setUserEmail(data.user.email.split('@')[0]);
+      }
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase?.auth.signOut();
     navigate('/login');
   };
 
@@ -100,7 +111,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center space-x-6">
             <div className="text-right">
-              <div className="text-[13px] font-semibold text-slate-800">Admin</div>
+              <div className="text-[13px] font-semibold text-slate-800 capitalize">{userEmail}</div>
               <div className="text-[11px] text-slate-500">Administration Team</div>
             </div>
             <button 

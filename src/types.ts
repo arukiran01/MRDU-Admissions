@@ -23,6 +23,7 @@ export interface Student {
     pgBonafide: boolean;
     others: string;
   };
+  uploadedFiles?: Record<string, string>;
   status: 'Pending' | 'Verified';
   createdAt: string;
   academicYear: string;

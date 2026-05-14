@@ -1,14 +1,15 @@
-import { Users, UserCheck, Clock, Search, Download, Filter, Edit, X, Save, Trash2, AlertTriangle, CheckCircle2, FileText, Send } from 'lucide-react';
+import { Users, UserCheck, Clock, Search, Download, Filter, Edit, X, Save, Trash2, AlertTriangle, CheckCircle2, FileText, Send, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Student } from '../types';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { getChecklistItems } from '../constants';
+import { supabase } from '../lib/supabase';
 
 export default function Dashboard() {
-  const { students, setCurrentStudent, updateStudent, deleteStudent, isLoading } = useAppContext();
+  const { students, setCurrentStudent, updateStudent, deleteStudent, isLoading, fetchStudents } = useAppContext();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
@@ -20,9 +21,83 @@ export default function Dashboard() {
   const [actionStudent, setActionStudent] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const branches = [...new Set(students.map(s => s.branch))];
   const academicYears = [...new Set(students.map(s => s.academicYear))];
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setIsUploading(true);
+        const dataBuffer = evt.target?.result;
+        const wb = XLSX.read(dataBuffer, { type: 'array' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        const studentsToInsert = data.map((row: any) => ({
+          admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',
+          name: row['Student Name'] || row['Name'] || row['name'] || '',
+          fatherName: row['Father Name'] || row['fatherName'] || '',
+          program: row['Program'] || 'UG',
+          branch: row['Branch'] || '',
+          parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || ''),
+          interHallTicket: String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || Math.random().toString(36).substring(2, 10).toUpperCase()),
+          academicYear: row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
+          status: 'Pending',
+          documents: {
+            sscMemo: false,
+            sscBonafide: false,
+            schoolBonafide6to9: false,
+            tc: false,
+            interPC: false,
+            interBonafide: false,
+            aadhaar: false,
+            degreeCMM: false,
+            degreePC: false,
+            degreeBonafide: false,
+            pgCMM: false,
+            pgPC: false,
+            pgBonafide: false,
+            others: ""
+          }
+        })).filter(s => s.name && s.admissionNo);
+        
+        if (studentsToInsert.length > 0) {
+          if (supabase) {
+            const { error } = await supabase.from('students').insert(studentsToInsert);
+            if (error) {
+               console.error("Bulk upload error:", error);
+               if (error.code === '23505') {
+                 alert("Upload blocked: Some students physically already exist or interHallTicket uniqueness violation. Remove duplicates from excel.");
+               } else {
+                 alert("Upload failed: " + error.message);
+               }
+            } else {
+               await fetchStudents();
+               alert(`Successfully bulk-imported ${studentsToInsert.length} students!`);
+            }
+          }
+        } else {
+          alert('No valid student entries found. Ensure columns match: "Admission No", "Student Name", "Inter Hall Ticket".');
+        }
+      } catch (err: any) {
+        console.error("Parsing error:", err);
+        alert("Error parsing excel file: " + (err.message || 'unknown element'));
+      } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
 
   const handleAction = (student: Student) => {
     setActionStudent(student);
@@ -105,11 +180,58 @@ export default function Dashboard() {
     XLSX.writeFile(workbook, 'admissionslip.xlsx');
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        'Admission No': '24/CS/101',
+        'Student Name': 'John Doe',
+        'Father Name': 'Richard Doe',
+        'Program': 'UG',
+        'Branch': 'CSE',
+        'Parent Phone': '9876543210',
+        'Inter Hall Ticket': 'HT12345678',
+        'Academic Year': '2024-2025'
+      },
+      {
+        'Admission No': '24/EC/102',
+        'Student Name': 'Jane Smith',
+        'Father Name': 'Robert Smith',
+        'Program': 'UG',
+        'Branch': 'ECE',
+        'Parent Phone': '9876543211',
+        'Inter Hall Ticket': 'HT12345679',
+        'Academic Year': '2024-2025'
+      }
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 15 }, // Admission No
+      { wch: 25 }, // Student Name
+      { wch: 25 }, // Father Name
+      { wch: 10 }, // Program
+      { wch: 10 }, // Branch
+      { wch: 15 }, // Parent Phone
+      { wch: 20 }, // Inter Hall Ticket
+      { wch: 15 }, // Academic Year
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'Student_Import_Template.xlsx');
+  };
+
   const filteredStudents = students.filter(
     (s) => {
-      const searchMatch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.admissionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.interHallTicket.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchLower = searchTerm.toLowerCase();
+      const searchMatch = s.name.toLowerCase().includes(searchLower) ||
+                          s.admissionNo.toLowerCase().includes(searchLower) ||
+                          s.interHallTicket.toLowerCase().includes(searchLower) ||
+                          s.parentPhone.toLowerCase().includes(searchLower) ||
+                          (s.fatherName && s.fatherName.toLowerCase().includes(searchLower)) ||
+                          (s.program && s.program.toLowerCase().includes(searchLower)) ||
+                          (s.branch && s.branch.toLowerCase().includes(searchLower));
       
       const branchMatch = branchFilter ? s.branch === branchFilter : true;
       const statusMatch = statusFilter ? s.status === statusFilter : true;
@@ -175,7 +297,35 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <h3 className="text-base font-semibold text-slate-800">All Registered Students</h3>
             <div className="flex gap-2">
-               <button 
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                accept=".xlsx, .xls, .csv" 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+              <button 
+                onClick={handleDownloadTemplate}
+                title="Download Template"
+                className="text-sm border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 font-semibold px-3 py-2 rounded-md transition-all flex items-center shrink-0"
+              >
+                <Download className="w-4 h-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Template</span>
+              </button>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                title="Import Excel"
+                className="text-sm border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95 disabled:opacity-50 disabled:active:scale-100 font-semibold px-3 py-2 rounded-md transition-all flex items-center shrink-0"
+              >
+                {isUploading ? (
+                  <div className="w-4 h-4 border-2 border-blue-700/30 border-t-blue-700 rounded-full animate-spin sm:mr-1.5" />
+                ) : (
+                  <Upload className="w-4 h-4 sm:mr-1.5" />
+                )}
+                <span className="hidden sm:inline">{isUploading ? 'Importing...' : 'Import'}</span>
+              </button>
+              <button 
                 onClick={handleDownloadExcel}
                 title="Download Excel"
                 className="text-sm border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95 font-semibold px-3 py-2 rounded-md transition-all flex items-center shrink-0"
@@ -301,18 +451,27 @@ export default function Dashboard() {
                   >
                     <td className="px-2 py-3 text-sm font-semibold text-slate-800">{student.admissionNo}</td>
                     <td className="px-2 py-3 text-sm text-slate-500">{student.interHallTicket}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{student.name}</td>
+                    <td className="px-2 py-3 text-sm text-slate-700">
+                      <div className="flex items-center gap-2">
+                        {student.name}
+                      </div>
+                    </td>
                     <td className="px-2 py-3 text-sm font-bold text-blue-600">{student.program}</td>
                     <td className="px-2 py-3 text-sm text-slate-700">{student.branch}</td>
                     <td className="px-2 py-3 text-sm text-slate-500">{student.academicYear}</td>
                     <td className="px-2 py-3 text-sm">
                       <span 
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${
                           student.status === 'Verified' 
-                            ? 'text-emerald-600 bg-emerald-50' 
-                            : 'text-amber-600 bg-amber-50'
+                            ? 'text-emerald-700 bg-emerald-100 border border-emerald-200 shadow-sm' 
+                            : 'text-amber-700 bg-amber-100 border border-amber-200 shadow-sm'
                         }`}
                       >
+                        {student.status === 'Verified' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        )}
                         {student.status.toUpperCase()}
                       </span>
                     </td>

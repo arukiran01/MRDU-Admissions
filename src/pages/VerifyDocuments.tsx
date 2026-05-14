@@ -1,29 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { DocumentKey, Student } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Users } from 'lucide-react';
+import { CheckCircle2, Users, UploadCloud, Eye, X } from 'lucide-react';
 import { getChecklistItems } from '../constants';
 
 export default function VerifyDocuments() {
   const { currentStudent, updateStudent, students, setCurrentStudent, isLoading } = useAppContext();
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string, name: string } | null>(null);
 
   // If there's no current student, just pick the most recent one
   useEffect(() => {
     if (!currentStudent && students.length > 0) {
-      // Sort by date to get the most recent unsynced one if needed
       const sorted = [...students].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      // Prefer a pending one
       const pending = sorted.find(s => s.status === 'Pending');
       setCurrentStudent(pending || sorted[0]);
     } else if (!currentStudent && students.length === 0 && !isLoading) {
       navigate('/add-student');
     }
   }, [currentStudent, students, navigate, setCurrentStudent, isLoading]);
+
+  const [docs, setDocs] = useState(currentStudent?.documents || {} as Student['documents']);
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, string>>(currentStudent?.uploadedFiles || {});
+
+  useEffect(() => {
+    if (currentStudent) {
+      setDocs(currentStudent.documents);
+      setUploadedFiles(currentStudent.uploadedFiles || {});
+    }
+  }, [currentStudent?.id]);
 
   if (!currentStudent) {
     const pendingStudents = students.filter(s => s.status === 'Pending');
@@ -78,13 +86,6 @@ export default function VerifyDocuments() {
     );
   }
 
-  const [docs, setDocs] = useState(currentStudent.documents);
-
-  // Keep docs in sync if currentStudent changes
-  useEffect(() => {
-    setDocs(currentStudent.documents);
-  }, [currentStudent?.id]); // Use id to avoid infinite loop
-
   const checklistItems = getChecklistItems(currentStudent.program);
 
   const handleToggle = (key: DocumentKey) => {
@@ -101,10 +102,38 @@ export default function VerifyDocuments() {
     }));
   };
 
+  const handleFileUpload = (key: DocumentKey, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size must be under 2MB for preview purposes.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setUploadedFiles(prev => ({ ...prev, [key]: evt.target?.result as string }));
+          setDocs(prev => ({ ...prev, [key]: true }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openPreview = (key: DocumentKey, label: string) => {
+    if (uploadedFiles[key]) {
+      setPreviewDoc({ url: uploadedFiles[key], name: label });
+    }
+  };
+
+  const isAllSubmitted = checklistItems.every(item => docs[item.key as keyof typeof docs]);
+  const calculatedStatus = isAllSubmitted ? 'Verified' : 'Pending';
+
   const handleHold = async () => {
     await updateStudent(currentStudent.id, {
       documents: docs,
-      status: 'Pending',
+      uploadedFiles,
+      status: calculatedStatus,
     });
     navigate('/dashboard');
   };
@@ -112,7 +141,8 @@ export default function VerifyDocuments() {
   const handleSubmit = async () => {
     await updateStudent(currentStudent.id, {
       documents: docs,
-      status: 'Verified',
+      uploadedFiles,
+      status: calculatedStatus,
     });
     setShowSuccess(true);
     setTimeout(() => {
@@ -163,17 +193,48 @@ export default function VerifyDocuments() {
           <label className="block text-[11px] uppercase text-slate-500 mb-2 tracking-wider">Checklist Documents Provided</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            {checklistItems.map((item) => (
-              <label key={item.key} className="flex items-center gap-2.5 p-2.5 border border-slate-200 rounded-lg text-[13px] hover:border-slate-300 cursor-pointer transition-colors bg-white">
-                <input
-                  type="checkbox"
-                  checked={!!docs[item.key as keyof typeof docs]}
-                  onChange={() => handleToggle(item.key)}
-                  className="w-4 h-4 accent-blue-600 rounded"
-                />
-                <span className="font-medium text-slate-800">{item.label}</span>
-              </label>
-            ))}
+            {checklistItems.map((item) => {
+              const isChecked = !!docs[item.key as keyof typeof docs];
+              const hasFile = !!uploadedFiles[item.key];
+              
+              return (
+                <div key={item.key} className="flex items-center justify-between p-2.5 border border-slate-200 rounded-lg text-[13px] hover:border-slate-300 transition-colors bg-white">
+                  <label className="flex items-center gap-2.5 cursor-pointer flex-1">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleToggle(item.key)}
+                      className="w-4 h-4 accent-blue-600 rounded"
+                    />
+                    <span className="font-medium text-slate-800 truncate">{item.label}</span>
+                  </label>
+                  
+                  <div className="flex items-center gap-1.5 ml-2">
+                    {hasFile && (
+                      <button 
+                        onClick={() => openPreview(item.key, item.label)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        title="View Document"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                    <label 
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${hasFile ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
+                      title={hasFile ? "Change Document" : "Upload Document"}
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*,application/pdf"
+                        onChange={(e) => handleFileUpload(item.key, e)} 
+                      />
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
             {/* Others input */}
             <div className="col-span-1 md:col-span-2 p-2.5 border border-slate-200 rounded-lg bg-white flex items-center gap-2.5 hover:border-slate-300 transition-colors">
               <span className="text-[13px] font-medium text-slate-800 shrink-0">Others (Specify):</span>
@@ -190,15 +251,15 @@ export default function VerifyDocuments() {
           <div className="flex gap-3 relative overflow-hidden">
             <button
               onClick={handleSubmit}
-              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+              className={`px-5 py-2.5 ${isAllSubmitted ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-semibold rounded-md active:scale-95 transition-all shadow-sm`}
             >
-              Verify & Generate Receipt
+              Save as {calculatedStatus} & Generate Receipt
             </button>
             <button
               onClick={handleHold}
               className="px-5 py-2.5 bg-transparent border border-slate-200 text-slate-800 text-sm font-semibold rounded-md hover:bg-slate-50 active:scale-95 transition-all"
             >
-              Keep on Hold (Pending)
+              Save & Return to Dashboard
             </button>
             
             <AnimatePresence>
@@ -341,6 +402,42 @@ export default function VerifyDocuments() {
           </p>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <AnimatePresence>
+        {previewDoc && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-w-4xl w-full max-h-[90vh]"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                <h3 className="font-bold text-slate-800">{previewDoc.name}</h3>
+                <button 
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 overflow-auto bg-slate-50 flex-1 flex justify-center items-center">
+                {previewDoc.url.startsWith('data:application/pdf') ? (
+                  <iframe src={previewDoc.url} className="w-full h-[70vh] rounded-lg border border-slate-200" title={previewDoc.name} />
+                ) : (
+                  <img src={previewDoc.url} alt={previewDoc.name} className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200" />
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
