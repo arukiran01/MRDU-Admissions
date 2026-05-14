@@ -42,7 +42,7 @@ export default function Dashboard() {
         const data = XLSX.utils.sheet_to_json(ws);
         
         const studentsToInsert = data.map((row: any) => {
-          const interHallTicket = String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || crypto.randomUUID().split('-')[0].toUpperCase());
+          const interHallTicket = String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || '');
           return {
             id: crypto.randomUUID(),
             admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',

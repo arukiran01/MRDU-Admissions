@@ -194,11 +194,28 @@ export default function AddStudent() {
 
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
+                Inter Hall Ticket
+              </label>
+              <input
+                type="text"
+                name="interHallTicket"
+                value={formData.interHallTicket}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase"
+                placeholder="Ex: 23145678"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
                 Admission / Enquiry No. (Numbers only)
               </label>
               <input
                 type="text"
                 name="admissionNo"
+                pattern="[0-9]+"
+                title="Only Numbers Allowed"
                 value={formData.admissionNo}
                 onChange={handleChange}
                 required

@@ -126,10 +126,8 @@ export default function VerifyDocuments() {
     }
   };
 
-  const isAllChecklistSubmited = checklistItems.every(item => docs[item.key as keyof typeof docs]);
-  const isOthersSpecified = docs.others && docs.others.trim().length > 0;
-  // If either all checklist items are ticked OR the administration specified something in 'others' as an override/supplement 
-  const isAllSubmitted = isAllChecklistSubmited || isOthersSpecified;
+  // Verification logic: All required documents MUST be true
+  const isAllSubmitted = checklistItems.every(item => docs[item.key as keyof typeof docs]);
   const calculatedStatus = isAllSubmitted ? 'Verified' : 'Pending';
 
   const handleHold = async () => {

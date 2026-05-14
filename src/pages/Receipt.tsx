@@ -121,8 +121,12 @@ export default function Receipt() {
 
         <div className="flex flex-col gap-2.5 mb-8 px-2">
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
-              <span className="font-bold">Enq.No</span>
+              <span className="font-bold">Enq/Adm No</span>
               <span className="font-bold">: {currentStudent.admissionNo}</span>
+           </div>
+           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
+              <span className="font-bold">Inter Hall Ticket</span>
+              <span className="font-bold uppercase leading-snug">: {currentStudent.interHallTicket || 'N/A'}</span>
            </div>
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Student Name</span>
@@ -155,8 +159,8 @@ export default function Receipt() {
               const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
               return (
                 <div key={item.key} className="flex items-center gap-2">
-                   <div className="w-3.5 h-3.5 border-[1.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                     {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                   <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                     {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                    </div>
                    <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{item.label}</span>
                 </div>
@@ -165,8 +169,8 @@ export default function Receipt() {
            
            {currentStudent.documents.others && (
               <div className="flex items-center gap-2 mt-1">
-                 <div className="w-3.5 h-3.5 border-[1.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                 <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
                  </div>
                  <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{currentStudent.documents.others}</span>
               </div>
@@ -197,7 +201,7 @@ export default function Receipt() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-200 py-8 print:py-0 print:bg-white font-sans text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-200 py-8 print:py-0 print:bg-white font-sans text-slate-900 overflow-x-hidden" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
       <div className="w-full max-w-[794px] mx-auto px-4 print:px-0 print:max-w-none print:w-[210mm] print:h-[297mm]">
         
         {/* Print Action Bar (Hidden in print) */}

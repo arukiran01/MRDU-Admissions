@@ -199,7 +199,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const { error } = await supabase.from('students').update(data).eq('id', id);
+      const dbData = { ...data };
+      delete dbData.uploadedFiles;
+      const { error } = await supabase.from('students').update(dbData).eq('id', id);
       if (error) throw error;
       await fetchStudents();
     } catch (e: any) {
