@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 
 interface AppContextType {
   students: Student[];
-  addStudent: (student: Student) => Promise<void>;
+  addStudent: (student: Student) => Promise<{ success: boolean; errorMessage?: string }>;
   updateStudent: (id: string, data: Partial<Student>) => Promise<void>;
   deleteStudent: (id: string) => Promise<void>;
   logAction: (action: string, details: string, studentId?: string) => Promise<void>;
@@ -139,7 +139,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []); // Run on mount only
 
-  const addStudent = async (student: Student) => {
+  const addStudent = async (student: Student): Promise<{ success: boolean; errorMessage?: string }> => {
     const previousStudents = [...students];
     
     // Always update local state for immediate feedback
@@ -149,7 +149,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!supabase) {
       console.warn("Memory Mode: Student saved only to local state.");
       setDbStatus('memory');
-      return true;
+      return { success: true };
     }
 
     try {
@@ -158,6 +158,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (error) {
         if (error.code === '23505') {
           throw new Error("A student with this Inter Hall Ticket already exists.");
+        }
+        if (error.message?.includes("schema cache") || error.message?.includes("column")) {
+          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }
@@ -175,12 +178,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       await fetchStudents();
-      return true;
+      return { success: true };
     } catch (e: any) {
       console.error("Failed adding to Supabase:", e.message);
       // Revert if it was a real database error
       setStudents(previousStudents);
-      return false;
+      return { success: false, errorMessage: e.message };
     }
   };
 

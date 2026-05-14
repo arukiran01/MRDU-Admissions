@@ -124,10 +124,12 @@ export default function AddStudent() {
       createdAt: new Date().toISOString(),
     };
 
-    const success = await addStudent(newStudent);
+    const result = await addStudent(newStudent);
     setIsSubmitting(false);
-    if (success) {
+    if (result.success) {
       navigate('/dashboard');
+    } else {
+      alert("Failed to add student:\n" + (result.errorMessage || "Unknown error"));
     }
   };
 

@@ -81,6 +81,8 @@ export default function Dashboard() {
                console.error("Bulk upload error:", error);
                if (error.code === '23505') {
                  alert("Upload blocked: Some students physically already exist or interHallTicket uniqueness violation. Remove duplicates from excel.");
+               } else if (error.message?.includes("schema cache") || error.message?.includes("column")) {
+                 alert("Upload failed: Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
                } else {
                  alert("Upload failed: " + error.message);
                }
