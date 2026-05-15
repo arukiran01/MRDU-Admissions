@@ -7,20 +7,18 @@ export const getChecklistItems = (program: 'UG' | 'PG'): { key: DocumentKey; lab
         { key: 'sscMemo', label: '10TH CLASS MEMO' },
         { key: 'sscBonafide', label: '10TH CLASS BONAFIDE' },
         { key: 'schoolBonafide6to9', label: 'BONAFIDE FROM 6TH TO 9TH CLASS' },
+        { key: 'interPC', label: 'INTER/DIPLOMA/DEGREE MEMO' },
         { key: 'tc', label: 'TRANSFER CERTIFICATE (TC)' },
-        { key: 'interPC', label: 'INTER/DIPLOMA PC' },
-        { key: 'interBonafide', label: 'INTER/DIPLOMA BONAFIDE' },
-        { key: 'aadhaar', label: 'AADHAR CARD' },
+        { key: 'interBonafide', label: 'INTER/DIPLOMA/DEGREE BONAFIDE' },
       ];
     case 'PG':
       return [
         { key: 'sscMemo', label: '10TH CLASS MEMO' },
-        { key: 'interPC', label: 'INTER/DIPLOMA PC' },
-        { key: 'aadhaar', label: 'AADHAR CARD' },
+        { key: 'interPC', label: 'INTER/DIPLOMA MEMO' },
         { key: 'degreeCMM', label: 'DEGREE/B.TECH CMM' },
         { key: 'degreePC', label: 'DEGREE/B.TECH PC' },
-        { key: 'degreeBonafide', label: 'DEGREE/B.TECH BONAFIDE' },
         { key: 'tc', label: 'TRANSFER CERTIFICATE (TC)' },
+        { key: 'degreeBonafide', label: 'DEGREE/B.TECH BONAFIDE' },
       ];
     default:
       return [];

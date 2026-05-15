@@ -116,17 +116,13 @@ export default function Receipt() {
         <div className="border-t-[1px] border-black mt-[3px] mb-6"></div>
 
         <div className="text-center font-extrabold text-[13px] uppercase underline underline-offset-4 mb-6 tracking-wide">
-           ADMISSIONS CERTIFICATION
+           CERTIFICATE ACKNOWLEDGMENT
         </div>
 
         <div className="flex flex-col gap-2.5 mb-8 px-2">
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Enq/Adm No</span>
               <span className="font-bold">: {currentStudent.admissionNo}</span>
-           </div>
-           <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
-              <span className="font-bold">Inter Hall Ticket</span>
-              <span className="font-bold uppercase leading-snug">: {currentStudent.interHallTicket || 'N/A'}</span>
            </div>
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Student Name</span>
@@ -138,7 +134,7 @@ export default function Receipt() {
            </div>
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Academic Year</span>
-              <span className="font-bold uppercase">: {currentStudent.academicYear}</span>
+              <span className="font-bold uppercase">: 2026-27</span>
            </div>
            <div className="grid grid-cols-[120px_1fr] items-start text-[10px] sm:text-[11px]">
               <span className="font-bold">Program</span>
@@ -157,24 +153,38 @@ export default function Receipt() {
         <div className="flex flex-col gap-1.5 px-2 mb-8 flex-grow">
            {checklistItems.map(item => {
               const isGiven = !!currentStudent.documents[item.key as keyof typeof currentStudent.documents];
+              
+              const renderLabelWithSuperscript = (label: string) => {
+                if (label.includes('10TH')) {
+                  return <span key={label}>10<sup className="text-[7.5px] uppercase font-black">TH</sup>{label.substring(4)}</span>;
+                }
+                if (label.includes('6TH') && label.includes('9TH')) {
+                   return <span key={label}>BONAFIDE FROM 6<sup className="text-[7.5px] uppercase font-black">TH</sup> TO 9<sup className="text-[7.5px] uppercase font-black">TH</sup> CLASS</span>;
+                }
+                return label;
+              };
+
               return (
                 <div key={item.key} className="flex items-center gap-2">
                    <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
                      {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                    </div>
-                   <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{item.label}</span>
+                   <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{renderLabelWithSuperscript(item.label)}</span>
                 </div>
               );
            })}
            
-           {currentStudent.documents.others && (
-              <div className="flex items-center gap-2 mt-1">
-                 <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                 </div>
-                 <span className="font-bold text-black uppercase text-[9px] sm:text-[10px]">{currentStudent.documents.others}</span>
+           <div className="flex items-center gap-2 mt-1">
+              <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
+                {currentStudent.documents.others && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
               </div>
-           )}
+              <span className="font-bold text-black uppercase text-[9px] sm:text-[10px] flex items-end">
+                 <span>OTHERS:</span>
+                 <span className="border-b-[1.5px] border-black ml-1.5 min-w-[200px] inline-block tracking-wide leading-none translate-y-[2px] px-1 truncate">
+                   {currentStudent.documents.others || ''}
+                 </span>
+              </span>
+           </div>
         </div>
 
         <div className="mt-auto">
@@ -187,10 +197,8 @@ export default function Receipt() {
 
            <div className="border-[1.5px] border-black px-3 py-2 bg-slate-50 print:bg-white text-justify">
               <p className="font-bold text-[7px] sm:text-[8px] leading-[1.4] text-left">
-                 <span className="font-black uppercase mr-1">Note:</span>
-                 Parents are requested to preserve this receipt for future clarifications in
-                 respect of fee paid by you. Fee once paid will not be refunded or transferred.
-                 Cheques subject to realization.
+                 <span className="font-black uppercase mr-1">NOTE:</span>
+                 Parents are requested to preserve this Acknowledgment till the end of the course.
               </p>
            </div>
         </div>
