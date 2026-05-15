@@ -111,7 +111,7 @@ export default function Receipt() {
 
         <div className="border-t-[1px] border-black mt-1 mb-[3px]"></div>
         <div className="text-center font-bold text-[8px] sm:text-[9px] px-2 leading-snug">
-           Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
+           Maisammaguda, Dhulapally - 500100, Telangana, India. | www.mrdu.edu.in | Phone No: 9348161303
         </div>
         <div className="border-t-[1px] border-black mt-[3px] mb-6"></div>
 
