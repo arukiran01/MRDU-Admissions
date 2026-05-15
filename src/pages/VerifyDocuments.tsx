@@ -320,7 +320,7 @@ export default function VerifyDocuments() {
 
                 <div className="border-t-[0.5px] border-black mt-0.5 mb-[1.5px]"></div>
                 <div className="text-center font-bold text-[4.5px] px-1 leading-snug">
-                   Maisammaguda, Dhulapally, Secunderabad - 500100, Telangana. | www.mrdu.edu.in
+                   Maisammaguda, Dhulapally - 500100, Telangana. | www.mrdu.edu.in
                 </div>
                 <div className="border-t-[0.5px] border-black mt-[1.5px] mb-3"></div>
 
@@ -362,12 +362,23 @@ export default function VerifyDocuments() {
                 <div className="flex flex-col gap-[2px] px-1 mb-4 flex-grow">
                    {checklistItems.map(item => {
                       const isGiven = !!docs[item.key as keyof typeof docs];
+                      
+                      const renderLabelWithSuperscript = (label: string) => {
+                        if (label.includes('10TH')) {
+                          return <span key={label}>10<sup className="text-[3.5px] lowercase font-black">th</sup>{label.substring(4)}</span>;
+                        }
+                        if (label.includes('6TH') && label.includes('9TH')) {
+                           return <span key={label}>BONAFIDE FROM 6<sup className="text-[3.5px] lowercase font-black">th</sup> TO 9<sup className="text-[3.5px] lowercase font-black">th</sup> CLASS</span>;
+                        }
+                        return label;
+                      };
+
                       return (
                         <div key={item.key} className="flex items-center gap-1.5">
                            <div className="w-[6px] h-[6px] border-[0.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
                              {isGiven && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[4px] h-[4px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                            </div>
-                           <span className="font-bold text-black uppercase text-[4.5px] truncate">{item.label}</span>
+                           <span className="font-bold text-black uppercase text-[4.5px] truncate">{renderLabelWithSuperscript(item.label)}</span>
                         </div>
                       );
                    })}

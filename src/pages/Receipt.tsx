@@ -156,10 +156,10 @@ export default function Receipt() {
               
               const renderLabelWithSuperscript = (label: string) => {
                 if (label.includes('10TH')) {
-                  return <span key={label}>10<sup className="text-[7.5px] uppercase font-black">TH</sup>{label.substring(4)}</span>;
+                  return <span key={label}>10<sup className="text-[7.5px] lowercase font-black">th</sup>{label.substring(4)}</span>;
                 }
                 if (label.includes('6TH') && label.includes('9TH')) {
-                   return <span key={label}>BONAFIDE FROM 6<sup className="text-[7.5px] uppercase font-black">TH</sup> TO 9<sup className="text-[7.5px] uppercase font-black">TH</sup> CLASS</span>;
+                   return <span key={label}>BONAFIDE FROM 6<sup className="text-[7.5px] lowercase font-black">th</sup> TO 9<sup className="text-[7.5px] lowercase font-black">th</sup> CLASS</span>;
                 }
                 return label;
               };
