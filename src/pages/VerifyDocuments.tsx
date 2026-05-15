@@ -372,14 +372,17 @@ export default function VerifyDocuments() {
                       );
                    })}
                    
-                   {docs.others && (
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                         <div className="w-[6px] h-[6px] border-[0.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden">
-                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[4px] h-[4px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                         </div>
-                         <span className="font-bold text-black uppercase text-[4.5px] truncate">{docs.others}</span>
+                   <div className="flex items-end gap-1.5 mt-0.5">
+                      <div className="w-[6px] h-[6px] border-[0.5px] border-black rounded-full flex justify-center items-center bg-white shrink-0 overflow-hidden mb-[1px]">
+                         {docs.others && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-[4px] h-[4px] text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                       </div>
-                   )}
+                      <div className="font-bold text-black uppercase text-[4.5px] flex flex-1 items-end gap-1">
+                         <span className="shrink-0 mb-[1px]">OTHERS:</span>
+                         <div className="flex-1 border-b-[0.5px] border-black pb-[1px] min-w-0">
+                             <span className="px-1 line-clamp-1">{docs.others || '\u00A0'}</span>
+                         </div>
+                      </div>
+                   </div>
                 </div>
 
                 <div className="mt-auto">

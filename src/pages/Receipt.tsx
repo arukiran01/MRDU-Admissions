@@ -174,16 +174,16 @@ export default function Receipt() {
               );
            })}
            
-           <div className="flex items-center gap-2 mt-1">
-              <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden">
+           <div className="flex items-end gap-2 mt-1">
+              <div className="w-4 h-4 border-[1.5px] border-black flex justify-center items-center bg-white shrink-0 overflow-hidden mb-[1px]">
                 {currentStudent.documents.others && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>}
               </div>
-              <span className="font-bold text-black uppercase text-[9px] sm:text-[10px] flex items-end">
-                 <span>OTHERS:</span>
-                 <span className="border-b-[1.5px] border-black ml-1.5 min-w-[200px] inline-block tracking-wide leading-none translate-y-[2px] px-1 truncate">
-                   {currentStudent.documents.others || ''}
-                 </span>
-              </span>
+              <div className="font-bold text-black uppercase text-[9px] sm:text-[10px] flex flex-1 items-end gap-1.5">
+                 <span className="shrink-0 mb-[1px]">OTHERS:</span>
+                 <div className="flex-1 border-b-[1.5px] border-black pb-[1px] min-w-0">
+                     <span className="px-1 line-clamp-1">{currentStudent.documents.others || '\u00A0'}</span>
+                 </div>
+              </div>
            </div>
         </div>
 
