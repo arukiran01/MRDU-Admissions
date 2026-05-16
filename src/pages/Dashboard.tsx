@@ -19,7 +19,6 @@ export default function Dashboard() {
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
-  const [actionStudent, setActionStudent] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,7 +42,6 @@ export default function Dashboard() {
         const data = XLSX.utils.sheet_to_json(ws);
         
         const studentsToInsert = data.map((row: any) => {
-          const interHallTicket = String(row['Inter Hall Ticket'] || row['Hall Ticket'] || row['interHallTicket'] || '');
           return {
             id: crypto.randomUUID(),
             admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',
@@ -52,9 +50,8 @@ export default function Dashboard() {
             program: row['Program'] || 'UG',
             branch: row['Branch'] || '',
             parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || ''),
-            interHallTicket: interHallTicket,
             academicYear: row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
-            status: 'Pending',
+            status: 'Unverified',
             documents: {
               sscMemo: false,
               sscBonafide: false,
@@ -80,9 +77,9 @@ export default function Dashboard() {
             if (error) {
                console.error("Bulk upload error:", error);
                if (error.code === '23505') {
-                 alert("Upload blocked: Some students physically already exist or interHallTicket uniqueness violation. Remove duplicates from excel.");
+                 alert("Upload blocked: Some students physically already exist. Remove duplicates from excel.");
                } else if (error.message?.includes("schema cache") || error.message?.includes("column")) {
-                 alert("Upload failed: Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
+                 alert("Upload failed: Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
                } else {
                  alert("Upload failed: " + error.message);
                }
@@ -92,7 +89,7 @@ export default function Dashboard() {
             }
           }
         } else {
-          alert('No valid student entries found. Ensure columns match: "Admission No", "Student Name", "Inter Hall Ticket".');
+          alert('No valid student entries found. Ensure columns match: "Admission No", "Student Name".');
         }
       } catch (err: any) {
         console.error("Parsing error:", err);
@@ -106,34 +103,16 @@ export default function Dashboard() {
   };
 
 
-  const handleAction = (student: Student) => {
-    setActionStudent(student);
-  };
-
-  const handleChangeStatus = async (status: 'Pending' | 'Verified') => {
-    if (!actionStudent) return;
-    setIsUpdatingStatus(true);
-    const result = await updateStudent(actionStudent.id, { status });
-    setIsUpdatingStatus(false);
-    if (!result.success) {
-      alert("Failed to change status:\n" + (result.errorMessage || "Unknown error"));
-    } else {
-      setActionStudent(null);
-    }
-  };
-
-  const handleVerifyNavigate = () => {
-    if (!actionStudent) return;
-    setCurrentStudent(actionStudent);
+  const handleVerifyNavigate = (student: Student) => {
+    setCurrentStudent(student);
     navigate('/verify');
-    setActionStudent(null);
   };
 
   const handlePrintNavigate = () => {
-    if (!actionStudent) return;
-    setCurrentStudent(actionStudent);
+    if (!viewStudent) return;
+    setCurrentStudent(viewStudent);
     navigate('/receipt');
-    setActionStudent(null);
+    setViewStudent(null);
   };
 
   const handleEditClick = (student: Student) => {
@@ -173,7 +152,6 @@ export default function Dashboard() {
       const docs = s.documents;
       return {
         'Admission No': s.admissionNo,
-        'Inter Hall Ticket': s.interHallTicket,
         'Student Name': s.name,
         'Father Name': s.fatherName,
         'Program': s.program,
@@ -204,7 +182,6 @@ export default function Dashboard() {
         'Program': 'UG',
         'Branch': 'CSE',
         'Parent Phone': '9876543210',
-        'Inter Hall Ticket': 'HT12345678',
         'Academic Year': '2024-2025'
       },
       {
@@ -214,7 +191,6 @@ export default function Dashboard() {
         'Program': 'UG',
         'Branch': 'ECE',
         'Parent Phone': '9876543211',
-        'Inter Hall Ticket': 'HT12345679',
         'Academic Year': '2024-2025'
       }
     ];
@@ -229,7 +205,6 @@ export default function Dashboard() {
       { wch: 10 }, // Program
       { wch: 10 }, // Branch
       { wch: 15 }, // Parent Phone
-      { wch: 20 }, // Inter Hall Ticket
       { wch: 15 }, // Academic Year
     ];
 
@@ -242,7 +217,6 @@ export default function Dashboard() {
       const searchLower = searchTerm.toLowerCase();
       const searchMatch = s.name.toLowerCase().includes(searchLower) ||
                           s.admissionNo.toLowerCase().includes(searchLower) ||
-                          s.interHallTicket.toLowerCase().includes(searchLower) ||
                           s.parentPhone.toLowerCase().includes(searchLower) ||
                           (s.fatherName && s.fatherName.toLowerCase().includes(searchLower)) ||
                           (s.program && s.program.toLowerCase().includes(searchLower)) ||
@@ -280,6 +254,14 @@ export default function Dashboard() {
       icon: Clock,
       color: 'text-white',
       bgColor: 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-200',
+      iconBg: 'bg-white/20 text-white'
+    },
+    { 
+      label: 'Unverified', 
+      value: students.filter((s) => s.status === 'Unverified').length, 
+      icon: AlertTriangle,
+      color: 'text-white',
+      bgColor: 'bg-gradient-to-br from-rose-500 to-rose-600 shadow-rose-200',
       iconBg: 'bg-white/20 text-white'
     },
   ];
@@ -392,6 +374,7 @@ export default function Dashboard() {
               <option value="">Search Status</option>
               <option value="Verified">Verified</option>
               <option value="Pending">Pending</option>
+              <option value="Unverified">Unverified</option>
             </select>
 
             <select 
@@ -433,7 +416,6 @@ export default function Dashboard() {
           <thead>
             <tr className="text-slate-500 text-[11px] uppercase tracking-wider border-b border-slate-100">
               <th className="px-2 py-3 font-semibold">Adm No.</th>
-              <th className="px-2 py-3 font-semibold">Hall Ticket</th>
               <th className="px-2 py-3 font-semibold">Student Name</th>
               <th className="px-2 py-3 font-semibold">Program</th>
               <th className="px-2 py-3 font-semibold">Branch</th>
@@ -465,7 +447,6 @@ export default function Dashboard() {
                     onClick={() => setViewStudent(student)}
                   >
                     <td className="px-2 py-3 text-sm font-semibold text-slate-800">{student.admissionNo}</td>
-                    <td className="px-2 py-3 text-sm text-slate-500">{student.interHallTicket}</td>
                     <td className="px-2 py-3 text-sm text-slate-700">
                       <div className="flex items-center gap-2">
                         {student.name}
@@ -479,14 +460,14 @@ export default function Dashboard() {
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${
                           student.status === 'Verified' 
                             ? 'text-emerald-700 bg-emerald-100 border border-emerald-200 shadow-sm' 
-                            : 'text-amber-700 bg-amber-100 border border-amber-200 shadow-sm'
+                            : student.status === 'Pending'
+                            ? 'text-amber-700 bg-amber-100 border border-amber-200 shadow-sm'
+                            : 'text-rose-700 bg-rose-100 border border-rose-200 shadow-sm'
                         }`}
                       >
-                        {student.status === 'Verified' ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Clock className="w-3.5 h-3.5 text-amber-600" />
-                        )}
+                        {student.status === 'Verified' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                        {student.status === 'Pending' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
+                        {student.status === 'Unverified' && <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
                         {student.status.toUpperCase()}
                       </span>
                     </td>
@@ -507,14 +488,10 @@ export default function Dashboard() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <button 
-                          onClick={() => handleAction(student)}
-                          className={`px-3 py-1 text-[12px] font-bold rounded transition-all ml-1 ${
-                            student.status === 'Verified'
-                              ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
-                              : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
-                          }`}
+                          onClick={() => handleVerifyNavigate(student)}
+                          className={`px-3 py-1 text-[12px] font-bold rounded transition-all ml-1 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200`}
                         >
-                          {student.status === 'Verified' ? 'View Slip' : 'Take Action'}
+                          Verify Docs
                         </button>
                       </div>
                     </td>
@@ -537,93 +514,6 @@ export default function Dashboard() {
         </table>
       </div>
     </div>
-      {/* Action Selection Modal */}
-      <AnimatePresence>
-        {actionStudent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActionStudent(null)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
-            >
-              <div className="p-6 border-b border-slate-100 text-center">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                  actionStudent.status === 'Verified' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                }`}>
-                  <Send className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Choose Action</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  How would you like to proceed with <span className="font-bold text-slate-800">{actionStudent.name}</span>?
-                </p>
-              </div>
-
-              <div className="p-4 space-y-2">
-                {actionStudent.status === 'Verified' ? (
-                  <>
-                    <button 
-                      onClick={handlePrintNavigate}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all group font-semibold shadow-md shadow-emerald-100"
-                    >
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 mr-3 opacity-80" />
-                        <span>View / Print Receipt</span>
-                      </div>
-                    </button>
-                    <button 
-                      onClick={() => handleChangeStatus('Pending')}
-                      disabled={isUpdatingStatus}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all font-medium"
-                    >
-                      <div className="flex items-center">
-                        <Clock className="w-5 h-5 mr-3 text-amber-500" />
-                        <span>Mark as Pending</span>
-                      </div>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button 
-                      onClick={handleVerifyNavigate}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all group font-semibold shadow-md shadow-blue-100"
-                    >
-                      <div className="flex items-center">
-                        <CheckCircle2 className="w-5 h-5 mr-3 opacity-80" />
-                        <span>Verify Documents Now</span>
-                      </div>
-                    </button>
-                    <button 
-                      onClick={() => handleChangeStatus('Verified')}
-                      disabled={isUpdatingStatus}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all font-medium"
-                    >
-                      <div className="flex items-center">
-                        <UserCheck className="w-5 h-5 mr-3 text-emerald-500" />
-                        <span>Quick Mark as Verified</span>
-                      </div>
-                    </button>
-                  </>
-                )}
-                
-                <button 
-                  onClick={() => setActionStudent(null)}
-                  className="w-full py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
       <AnimatePresence>
         {viewStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -665,10 +555,6 @@ export default function Dashboard() {
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Admission No</p>
                     <p className="text-sm font-semibold text-slate-800">{viewStudent.admissionNo}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Inter Hall Ticket</p>
-                    <p className="text-sm font-semibold text-slate-800">{viewStudent.interHallTicket || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Program & Branch</p>
@@ -740,10 +626,14 @@ export default function Dashboard() {
                  >
                    Close
                  </button>
-                 <button 
+                  <button 
                     onClick={() => {
                       setViewStudent(null);
-                      handleAction(viewStudent);
+                      if (viewStudent.status === 'Verified') {
+                        handlePrintNavigate();
+                      } else {
+                        handleVerifyNavigate(viewStudent);
+                      }
                     }}
                     className={`ml-3 px-6 py-2 text-sm font-bold rounded-lg transition-all ${
                       viewStudent.status === 'Verified'
@@ -751,7 +641,7 @@ export default function Dashboard() {
                         : 'text-white bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200'
                     }`}
                   >
-                    {viewStudent.status === 'Verified' ? 'View Slip' : 'Take Action'}
+                    {viewStudent.status === 'Verified' ? 'View Slip' : 'Verify Docs'}
                   </button>
               </div>
             </motion.div>
@@ -814,15 +704,6 @@ export default function Dashboard() {
                       value={editingStudent.admissionNo}
                       onChange={(e) => setEditingStudent({...editingStudent, admissionNo: e.target.value})}
                       className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold uppercase text-slate-400 mb-1 block">Inter Hall Ticket</label>
-                    <input 
-                      type="text" 
-                      value={editingStudent.interHallTicket || ''}
-                      onChange={(e) => setEditingStudent({...editingStudent, interHallTicket: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
                     />
                   </div>
                   <div>

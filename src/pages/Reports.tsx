@@ -44,7 +44,6 @@ export default function Reports() {
     const data = students.map(s => ({
       'Registration Date': new Date(s.createdAt).toLocaleDateString(),
       'Admission No': s.admissionNo,
-      'Hall Ticket': s.interHallTicket,
       'Student Name': s.name,
       'Father Name': s.fatherName,
       'Branch': s.branch,

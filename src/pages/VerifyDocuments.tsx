@@ -192,10 +192,6 @@ export default function VerifyDocuments() {
               <span className="font-semibold text-sm text-slate-800">{currentStudent.branch}</span>
             </div>
             <div>
-              <label className="block text-[11px] uppercase text-slate-500 mb-1 tracking-wider">Inter Hall Ticket</label>
-              <span className="font-semibold text-sm text-slate-800">{currentStudent.interHallTicket}</span>
-            </div>
-            <div>
               <label className="block text-[11px] uppercase text-slate-500 mb-1 tracking-wider">Parent Phone</label>
               <span className="font-semibold text-sm text-slate-800">{currentStudent.parentPhone}</span>
             </div>

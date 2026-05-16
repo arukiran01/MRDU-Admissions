@@ -6,7 +6,6 @@ export interface Student {
   program: 'UG' | 'PG';
   branch: string;
   parentPhone: string;
-  interHallTicket: string;
   documents: {
     sscMemo: boolean;
     sscBonafide: boolean;
@@ -24,7 +23,7 @@ export interface Student {
     others: string;
   };
   uploadedFiles?: Record<string, string>;
-  status: 'Pending' | 'Verified';
+  status: 'Unverified' | 'Pending' | 'Verified';
   createdAt: string;
   academicYear: string;
 }

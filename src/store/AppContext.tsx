@@ -169,10 +169,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         if (error.code === '23505') {
-          throw new Error("A student with this Inter Hall Ticket already exists.");
+          throw new Error("A student with this admission number already exists.");
         }
         if (error.message?.includes("schema cache") || error.message?.includes("column")) {
-          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }
@@ -219,7 +219,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         if (error.message?.includes("schema cache") || error.message?.includes("column")) {
-          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"interHallTicket\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+          throw new Error("Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }

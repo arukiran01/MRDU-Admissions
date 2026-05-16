@@ -102,7 +102,7 @@ apiRouter.post('/students', async (req, res) => {
   const student = req.body;
   
   // Server-side validation
-  const requiredFields = ['name', 'admissionNo', 'fatherName', 'branch', 'parentPhone', 'interHallTicket', 'academicYear'];
+  const requiredFields = ['name', 'admissionNo', 'fatherName', 'branch', 'parentPhone', 'academicYear'];
   const missingFields = requiredFields.filter(field => !student[field] || (typeof student[field] === 'string' && !student[field].trim()));
   
   if (missingFields.length > 0) {

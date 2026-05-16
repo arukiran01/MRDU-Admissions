@@ -20,7 +20,6 @@ export default function AddStudent() {
     program: 'UG' as 'UG' | 'PG' | 'PHD',
     branch: '',
     parentPhone: '',
-    interHallTicket: '',
     academicYear: '2026-2027',
   });
 
@@ -48,7 +47,7 @@ export default function AddStudent() {
     const { name, value } = e.target;
     
     // Constraints logic
-    if (name === 'admissionNo' || name === 'interHallTicket') {
+    if (name === 'admissionNo') {
       // Numbers only
       if (value !== '' && !/^\d+$/.test(value)) return;
     }
@@ -102,7 +101,6 @@ export default function AddStudent() {
       admissionNo: formData.admissionNo.trim(),
       fatherName: formData.fatherName.trim().toUpperCase(),
       parentPhone: formData.parentPhone.trim(),
-      interHallTicket: formData.interHallTicket.trim(),
       academicYear: formData.academicYear.trim(),
       documents: {
         sscMemo: false,
@@ -120,7 +118,7 @@ export default function AddStudent() {
         pgBonafide: false,
         others: '',
       },
-      status: 'Pending',
+      status: 'Unverified',
       createdAt: new Date().toISOString(),
     };
 
@@ -176,36 +174,6 @@ export default function AddStudent() {
                 required
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase outline-none"
                 placeholder="e.g. JOHN DOE"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Inter Hall Ticket (Numbers only)
-              </label>
-              <input
-                type="text"
-                name="interHallTicket"
-                value={formData.interHallTicket}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Ex: 23145678"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-2">
-                Inter Hall Ticket
-              </label>
-              <input
-                type="text"
-                name="interHallTicket"
-                value={formData.interHallTicket}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase"
-                placeholder="Ex: 23145678"
               />
             </div>
 
