@@ -10,14 +10,13 @@ CREATE TABLE public.students (
     "fatherName" TEXT NOT NULL,
     branch TEXT NOT NULL,
     "parentPhone" TEXT NOT NULL,
-    "interHallTicket" TEXT UNIQUE NOT NULL,
     "academicYear" TEXT NOT NULL,
     
     -- Documents is stored as a structured JSONB object
     documents JSONB NOT NULL DEFAULT '{}'::jsonb,
     
     -- Status of Verification
-    status TEXT NOT NULL CHECK (status IN ('Pending', 'Verified')) DEFAULT 'Pending',
+    status TEXT NOT NULL CHECK (status IN ('Unverified', 'Pending', 'Verified')) DEFAULT 'Unverified',
     
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -78,8 +78,8 @@ export default function Dashboard() {
                console.error("Bulk upload error:", error);
                if (error.code === '23505') {
                  alert("Upload blocked: Some students physically already exist. Remove duplicates from excel.");
-               } else if (error.message?.includes("schema cache") || error.message?.includes("column")) {
-                 alert("Upload failed: Missing database column in Supabase.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students\nADD COLUMN IF NOT EXISTS \"documents\" jsonb,\nADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb,\nADD COLUMN IF NOT EXISTS \"program\" text,\nADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
+               } else if (error.message?.includes("schema cache") || error.message?.includes("column") || error.message?.includes("invalid input") || error.message?.includes("constraint")) {
+                 alert("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
                } else {
                  alert("Upload failed: " + error.message);
                }
