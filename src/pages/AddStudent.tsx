@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { AlertTriangle } from 'lucide-react';
 
 export default function AddStudent() {
-  const { addStudent, dbStatus } = useAppContext();
+  const { addStudent, dbStatus, students } = useAppContext();
   const navigate = useNavigate();
 
   const generateHallTicket = () => {
@@ -83,6 +83,13 @@ export default function AddStudent() {
     // Final checks
     if (!formData.name.trim() || !formData.admissionNo.trim() || !formData.branch) {
       alert("Please fill all required fields correctly.");
+      return;
+    }
+
+    // Check for duplicates in local state first
+    const isDuplicate = students.some(s => s.admissionNo.toLowerCase() === formData.admissionNo.trim().toLowerCase());
+    if (isDuplicate) {
+      alert("Validation Error: A student with this Admission/Enquiry Number already exists in the system.");
       return;
     }
 

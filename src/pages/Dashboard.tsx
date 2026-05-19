@@ -22,6 +22,12 @@ export default function Dashboard() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [importSummary, setImportSummary] = useState<{
+    total: number;
+    success: number;
+    duplicates: string[];
+    errors: string[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const branches = [...new Set(students.map(s => s.branch))];
@@ -35,23 +41,25 @@ export default function Dashboard() {
     reader.onload = async (evt) => {
       try {
         setIsUploading(true);
+        setImportSummary(null);
+        
         const dataBuffer = evt.target?.result;
         const wb = XLSX.read(dataBuffer, { type: 'array' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
         
-        const studentsToInsert = data.map((row: any) => {
+        const rawStudents = data.map((row: any) => {
           return {
             id: crypto.randomUUID(),
-            admissionNo: row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '',
-            name: row['Student Name'] || row['Name'] || row['name'] || '',
-            fatherName: row['Father Name'] || row['fatherName'] || '',
-            program: row['Program'] || 'UG',
-            branch: row['Branch'] || '',
-            parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || ''),
-            academicYear: row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
-            status: 'Unverified',
+            admissionNo: String(row['Admission No'] || row['Admission Number'] || row['admissionNo'] || '').trim(),
+            name: String(row['Student Name'] || row['Name'] || row['name'] || '').trim().toUpperCase(),
+            fatherName: String(row['Father Name'] || row['fatherName'] || '').trim().toUpperCase(),
+            program: (row['Program'] || 'UG') as 'UG' | 'PG',
+            branch: String(row['Branch'] || '').trim().toUpperCase(),
+            parentPhone: String(row['Parent Phone'] || row['Phone'] || row['parentPhone'] || '').trim(),
+            academicYear: String(row['Academic Year'] || row['Year'] || new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString()).trim(),
+            status: 'Unverified' as const,
             documents: {
               sscMemo: false,
               sscBonafide: false,
@@ -70,27 +78,49 @@ export default function Dashboard() {
             }
           };
         }).filter((s: any) => s.name && s.admissionNo);
-        
-        if (studentsToInsert.length > 0) {
+
+        if (rawStudents.length === 0) {
+          alert('No valid student entries found. Ensure columns match: "Admission No", "Student Name".');
+          setIsUploading(false);
+          return;
+        }
+
+        const existingAdmNos = new Set(students.map(s => s.admissionNo.toLowerCase()));
+        const toInsert: any[] = [];
+        const duplicates: string[] = [];
+
+        rawStudents.forEach(s => {
+          if (existingAdmNos.has(s.admissionNo.toLowerCase())) {
+            duplicates.push(`${s.admissionNo} (${s.name})`);
+          } else {
+            toInsert.push(s);
+            // Add to local set to prevent duplicates within the same file
+            existingAdmNos.add(s.admissionNo.toLowerCase());
+          }
+        });
+
+        let successCount = 0;
+        const errorMessages: string[] = [];
+
+        if (toInsert.length > 0) {
           if (supabase) {
-            const { error } = await supabase.from('students').insert(studentsToInsert);
+            const { error } = await supabase.from('students').insert(toInsert);
             if (error) {
-               console.error("Bulk upload error:", error);
-               if (error.code === '23505') {
-                 alert("Upload blocked: Some students physically already exist. Remove duplicates from excel.");
-               } else if (error.message?.includes("schema cache") || error.message?.includes("column") || error.message?.includes("invalid input") || error.message?.includes("constraint")) {
-                 alert("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query to fix it:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache in Supabase.");
-               } else {
-                 alert("Upload failed: " + error.message);
-               }
+               errorMessages.push(error.message);
             } else {
+               successCount = toInsert.length;
                await fetchStudents();
-               alert(`Successfully bulk-imported ${studentsToInsert.length} students!`);
             }
           }
-        } else {
-          alert('No valid student entries found. Ensure columns match: "Admission No", "Student Name".');
         }
+
+        setImportSummary({
+          total: rawStudents.length,
+          success: successCount,
+          duplicates: duplicates,
+          errors: errorMessages
+        });
+
       } catch (err: any) {
         console.error("Parsing error:", err);
         alert("Error parsing excel file: " + (err.message || 'unknown element'));
@@ -566,12 +596,42 @@ export default function Dashboard() {
                       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
                         viewStudent.status === 'Verified' 
                           ? 'text-emerald-700 bg-emerald-100 border border-emerald-200 shadow-sm' 
-                          : 'text-amber-700 bg-amber-100 border border-amber-200 shadow-sm'
+                          : viewStudent.status === 'Pending'
+                          ? 'text-amber-700 bg-amber-100 border border-amber-200 shadow-sm'
+                          : 'text-rose-700 bg-rose-100 border border-rose-200 shadow-sm'
                       }`}
                     >
                       {viewStudent.status.toUpperCase()}
                     </span>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Date</p>
+                    <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                       <Clock className="w-3.5 h-3.5 text-blue-500" />
+                       {new Date(viewStudent.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {viewStudent.pendingAt && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Marked Pending At</p>
+                      <p className="text-sm font-semibold text-amber-700 flex items-center gap-2">
+                         <Clock className="w-3.5 h-3.5" />
+                         {new Date(viewStudent.pendingAt).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  {viewStudent.verifiedAt && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Verified At</p>
+                      <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                         <CheckCircle2 className="w-3.5 h-3.5" />
+                         {new Date(viewStudent.verifiedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-slate-100">
@@ -769,6 +829,79 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {importSummary && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setImportSummary(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 text-center border-b border-slate-100">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                  importSummary.success > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                } border`}>
+                  {importSummary.success > 0 ? <CheckCircle2 className="w-8 h-8" /> : <Upload className="w-8 h-8" />}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Import Summary</h3>
+                <p className="text-sm text-slate-500 mt-1">Processed {importSummary.total} entries from file</p>
+              </div>
+
+              <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                    <p className="text-2xl font-bold text-emerald-700">{importSummary.success}</p>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Added Successfully</p>
+                  </div>
+                  <div className={`${importSummary.duplicates.length > 0 ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'} p-3 rounded-xl border text-center`}>
+                    <p className={`text-2xl font-bold ${importSummary.duplicates.length > 0 ? 'text-amber-700' : 'text-slate-400'}`}>{importSummary.duplicates.length}</p>
+                    <p className={`text-[10px] font-bold ${importSummary.duplicates.length > 0 ? 'text-amber-600' : 'text-slate-400'} uppercase tracking-wider`}>Duplicates Ignored</p>
+                  </div>
+                </div>
+
+                {importSummary.duplicates.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Duplicate Admission Nos:</h4>
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 text-[11px] font-medium text-slate-600 max-h-32 overflow-y-auto flex flex-wrap gap-2">
+                      {importSummary.duplicates.map((d, i) => (
+                        <span key={i} className="bg-white px-2 py-1 rounded border border-slate-200">{d}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {importSummary.errors.length > 0 && (
+                  <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+                    <h4 className="text-xs font-bold text-rose-700 flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-4 h-4" /> Errors:
+                    </h4>
+                    <ul className="text-xs text-rose-600 list-disc list-inside space-y-1 font-medium">
+                      {importSummary.errors.map((err, i) => <li key={i}>{err}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                <button 
+                  onClick={() => setImportSummary(null)}
+                  className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-sm"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {studentToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -24,6 +24,8 @@ export interface Student {
   };
   uploadedFiles?: Record<string, string>;
   status: 'Unverified' | 'Pending' | 'Verified';
+  pendingAt?: string;
+  verifiedAt?: string;
   createdAt: string;
   academicYear: string;
 }

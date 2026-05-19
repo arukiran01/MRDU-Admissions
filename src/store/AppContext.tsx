@@ -169,10 +169,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         if (error.code === '23505') {
-          throw new Error("A student with this admission number already exists.");
+          throw new Error("Duplicate Entry: A student with this Admission/Enquiry Number already exists.");
         }
         if (error.message?.includes("schema cache") || error.message?.includes("column") || error.message?.includes("invalid input") || error.message?.includes("constraint")) {
-          throw new Error("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+          throw new Error("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text, ADD COLUMN IF NOT EXISTS \"pendingAt\" timestamptz, ADD COLUMN IF NOT EXISTS \"verifiedAt\" timestamptz;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }
@@ -201,11 +201,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStudent = async (id: string, data: Partial<Student>): Promise<{ success: boolean; errorMessage?: string }> => {
     const previousStudents = [...students];
+    const timestamp = new Date().toISOString();
+    
+    // Inject timestamps based on status change
+    let updatedData = { ...data };
+    if (data.status === 'Pending') {
+      updatedData.pendingAt = timestamp;
+    } else if (data.status === 'Verified') {
+      updatedData.verifiedAt = timestamp;
+    }
     
     // Optimistic Update
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
+    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, ...updatedData } : s)));
     if (currentStudent?.id === id) {
-      setCurrentStudent((prev) => (prev ? { ...prev, ...data } : null));
+      setCurrentStudent((prev) => (prev ? { ...prev, ...updatedData } : null));
     }
 
     if (!supabase) {
@@ -214,12 +223,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const dbData = { ...data };
-      const { error } = await supabase.from('students').update(dbData).eq('id', id);
+      const { error } = await supabase.from('students').update(updatedData).eq('id', id);
       
       if (error) {
         if (error.message?.includes("schema cache") || error.message?.includes("column") || error.message?.includes("invalid input") || error.message?.includes("constraint")) {
-          throw new Error("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text;\n\nThen click Settings > API > Reload schema cache.");
+          throw new Error("Supabase schema needs an update.\n\nPlease go to your Supabase SQL Editor and run this query:\n\nALTER TABLE public.students DROP CONSTRAINT IF EXISTS students_status_check;\nALTER TABLE public.students ADD CONSTRAINT students_status_check CHECK (status IN ('Unverified', 'Pending', 'Verified'));\nALTER TABLE public.students DROP COLUMN IF EXISTS \"interHallTicket\";\nALTER TABLE public.students ADD COLUMN IF NOT EXISTS \"documents\" jsonb, ADD COLUMN IF NOT EXISTS \"uploadedFiles\" jsonb, ADD COLUMN IF NOT EXISTS \"program\" text, ADD COLUMN IF NOT EXISTS \"academicYear\" text, ADD COLUMN IF NOT EXISTS \"pendingAt\" timestamptz, ADD COLUMN IF NOT EXISTS \"verifiedAt\" timestamptz;\n\nThen click Settings > API > Reload schema cache.");
         }
         throw error;
       }

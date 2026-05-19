@@ -2,11 +2,10 @@
 -- Copy and paste this script into your Supabase SQL Editor to create the necessary tables.
 
 CREATE TABLE public.students (
-    -- The user requested interHallTicket to basically act as the primary unique key
-    -- Here we define a UUID primary key but ensure interHallTicket is Unique
+    -- Primary key is a generated UUID
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    "admissionNo" TEXT NOT NULL,
+    "admissionNo" TEXT UNIQUE NOT NULL,
     "fatherName" TEXT NOT NULL,
     branch TEXT NOT NULL,
     "parentPhone" TEXT NOT NULL,
@@ -17,7 +16,8 @@ CREATE TABLE public.students (
     
     -- Status of Verification
     status TEXT NOT NULL CHECK (status IN ('Unverified', 'Pending', 'Verified')) DEFAULT 'Unverified',
-    
+    "pendingAt" TIMESTAMPTZ,
+    "verifiedAt" TIMESTAMPTZ,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
